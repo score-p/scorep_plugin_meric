@@ -1,0 +1,15 @@
+*
+# Git
+!*.gitignore
+!*.gitmodules
+# Sources
+!*.cpp
+!*.h
+# Cmake
+!*.cmake
+!*.CMakeLists.txt
+
+# Directories
+!include/
+!cmake/
+!src/
