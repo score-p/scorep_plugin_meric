@@ -36,7 +36,7 @@ macro(_git_submodule_update_path git_path)
             WORKING_DIRECTORY "${git_path}"
             OUTPUT_VARIABLE GIT_SUBMODULE_STATE
     )
-    string(REPLACE "\n" ";" GIT_SUBMODULE_STATE ${GIT_SUBMODULE_STATE})
+    string(REPLACE "\n" ";" GIT_SUBMODULE_STATE "${GIT_SUBMODULE_STATE}")
     foreach(submodule IN LISTS GIT_SUBMODULE_STATE)
         if(submodule MATCHES "[ ]*[+-][^ ]* ([^ ]*).*")
             message("  Found outdated submodule '${CMAKE_MATCH_1}'")
