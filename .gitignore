@@ -13,9 +13,11 @@
 !*.cmake
 !*CMakeLists.txt
 
+!README
 
 !LICENSES/
 !LICENSES/*.txt
+
 !include/
 !cmake/
 !src/
