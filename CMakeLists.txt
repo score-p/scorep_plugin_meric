@@ -1,3 +1,8 @@
+#
+# SPDX-FileCopyrightText: (c) 2025 Forschungszentrum Jülich GmbH <fz-juelich.de>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
 cmake_minimum_required(VERSION 3.10)
 project(meric_plugin)
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: NONE
+#
+# SPDX-License-Identifier: CC0-1.0
 *
 # Git
 !*.gitignore
@@ -9,7 +12,9 @@
 !*.cmake
 !*CMakeLists.txt
 
-# Directories
+
+!LICENSES/
+!LICENSES/*.txt
 !include/
 !cmake/
 !src/
