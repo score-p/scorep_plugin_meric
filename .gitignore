@@ -7,7 +7,7 @@
 !*.h
 # Cmake
 !*.cmake
-!*.CMakeLists.txt
+!*CMakeLists.txt
 
 # Directories
 !include/

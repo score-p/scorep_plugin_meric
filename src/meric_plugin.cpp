@@ -32,216 +32,68 @@
     This plugin is an asynchronous metric plugin. It will record values once on a certain thread
     within a certain process.
  */
+#include "meric_plugin.h"
 
 #include <scorep/plugin/plugin.hpp>
 
-#include <iostream>
-#include <string>
 #include <vector>
-#include <thread>
 #include <chrono>
-#include <unordered_map>
 
-using namespace scorep::plugin::policy;
 
 using scorep::plugin::logging;
 
-using TVPair = std::pair<scorep::chrono::ticks, double>;
 
-
-struct energy_metric
+meric_plugin::meric_plugin() :
+    measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "interval_us", "50000" ) ) ) )
 {
-    energy_metric( const std::string& name )
-        : name( name ), ref( scorep::chrono::measurement_clock::now(), 0 )
-    {
-    }
-
-    energy_metric( const energy_metric& ) = delete;
-    /* copy-assign */
-    energy_metric&
-    operator=( const energy_metric& ) = delete;
-
-    /* move constructor */
-    energy_metric( energy_metric&& ) = default;
-    /* move assignment */
-    energy_metric&
-    operator=( energy_metric&& ) = default;
-
-    bool
-    operator==( const energy_metric& other ) const
-    {
-        return this->name == other.name;
-    }
-
-    TVPair
-    read() const
-    {
-        const auto timestamp = scorep::chrono::measurement_clock::now();
-        return TVPair( timestamp, 10. * ( timestamp - ref.first ).count() );
-    }
-
-    std::string name;
-    TVPair      ref;
-};
-
-
-namespace std
-{
-inline ostream&
-operator<<( ostream& s, const energy_metric& metric )
-{
-    s << "(" << metric.name << ")";
-    return s;
+    scorep::plugin::log::set_min_severity_level( nitro::log::severity_level::debug );
 }
 
-template <>
-struct hash<energy_metric>
+std::vector<scorep::plugin::metric_property>
+meric_plugin::get_metric_properties( const std::string& metric_name )
 {
-    size_t inline
-    operator()( const energy_metric& metric ) const
-    {
-        return std::hash<std::string>{} ( metric.name );
-    }
-};
-};
+    logging::info() << "get metric properties called with: " << metric_name;
 
+    make_handle( metric_name, metric_name );
 
+    // Must use the same name here as for the handle you made earlier.
+    return { scorep::plugin::metric_property(
+                 metric_name,
+                 "Meric energy counter",
+                 "J"
+                 ).absolute_point().value_double().decimal() };
+}
 
-class meric_measurement
+void
+meric_plugin::add_metric( energy_metric& metric )
 {
-public:
-    meric_measurement( std::chrono::microseconds interval ) : interval( interval )
-    {
-    }
+    logging::info() << "add metric called with: " << metric.name;
+}
 
-    void
-    start( const std::vector<energy_metric>& handles )
-    {
-        data.clear();
-        for ( auto& handle : handles )
-        {
-            data.insert( std::make_pair( std::ref( const_cast<energy_metric&>( handle ) ),
-                                         std::vector<TVPair>() ) );
-        }
-        active             = true;
-        measurement_thread = std::thread([ this ](){
-            this->collect_readings();
-        } );
-    }
-
-    void
-    stop()
-    {
-        active = false;
-        if ( measurement_thread.joinable() )
-        {
-            measurement_thread.join();
-        }
-    }
-
-    std::vector<TVPair>&
-    readings( energy_metric& handle )
-    {
-        return data[ handle ];
-    }
-
-private:
-    void
-    collect_readings()
-    {
-        while ( active )
-        {
-            for ( auto& item : data )
-            {
-                const auto& metric   = item.first.get();
-                auto&       sequence = item.second;
-                sequence.emplace_back( metric.read() );
-            }
-            std::this_thread::sleep_for( interval );
-        }
-    }
-
-    std::unordered_map<std::reference_wrapper<energy_metric>,
-                       std::vector<TVPair>,
-                       std::hash<energy_metric>,
-                       std::equal_to<energy_metric> > data;
-
-    std::thread               measurement_thread;
-    bool                      active;
-    std::chrono::microseconds interval;
-};
-
-
-template <typename P, typename Policies>
-using meric_object_id = object_id<energy_metric, P, Policies>;
-
-class meric_plugin : public scorep::plugin::base<meric_plugin,
-                                                 async, per_host, post_mortem, scorep_clock, meric_object_id>
+void
+meric_plugin::start()
 {
-public:
-    meric_plugin() :
-        measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "interval_us", "50000" ) ) ) )
+    measurement.start( get_handles() );
+}
+
+void
+meric_plugin::stop()
+{
+    measurement.stop();
+}
+
+template <typename C>
+void
+meric_plugin::get_all_values( energy_metric& metric, C& cursor )
+{
+    logging::info() << "get_all_values called with: " << metric.name;
+
+    // write the collected data to the cursor.
+    for ( auto& tvpair : measurement.readings( metric ) )
     {
-        scorep::plugin::log::set_min_severity_level( nitro::log::severity_level::debug );
+        cursor.write( tvpair.first, tvpair.second );
     }
+}
 
-    // Convert a named metric (may contain wildcards or so) to a vector of
-    // actual metrics (may have a different name)
-    std::vector<scorep::plugin::metric_property>
-    get_metric_properties( const std::string& metric_name )
-    {
-        logging::info() << "get metric properties called with: " << metric_name;
-
-        make_handle( metric_name, metric_name );
-
-        // Must use the same name here as for the handle you made earlier.
-        return { scorep::plugin::metric_property(
-                     metric_name,
-                     "Meric energy counter",
-                     "J"
-                     ).absolute_point().value_double().decimal() };
-    }
-
-    void
-    add_metric( energy_metric& metric )
-    {
-        logging::info() << "add metric called with: " << metric.name;
-    }
-
-    // start your measurement in this method
-    void
-    start()
-    {
-        begin = scorep::chrono::measurement_clock::now();
-        measurement.start( get_handles() );
-    }
-
-    // stop your measurement in this method
-    void
-    stop()
-    {
-        end = scorep::chrono::measurement_clock::now();
-        measurement.stop();
-    }
-
-    // Will be called post mortem by the measurement environment
-    // You return all values measured.
-    template <typename C>
-    void
-    get_all_values( energy_metric& metric, C& cursor )
-    {
-        logging::info() << "get_all_values called with: " << metric.name;
-
-        // write the collected data to the cursor.
-        for ( auto& tvpair : measurement.readings( metric ) )
-        {
-            cursor.write( tvpair.first, tvpair.second );
-        }
-    }
-
-private:
-    scorep::chrono::ticks begin, end;
-    meric_measurement     measurement;
-};
 
 SCOREP_METRIC_PLUGIN_CLASS( meric_plugin, "meric" )
