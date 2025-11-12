@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 3.10)
 project(meric_plugin)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scorep_plugin_common")
 #list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scorep_plugin_cxx_wrapper")
 
 find_package(Uncrustify)
@@ -48,3 +49,6 @@ add_custom_command(
   ARGS -c ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg --replace --no-backup ${CMAKE_CURRENT_SOURCE_DIR}/src/*
   )
 ENDIF(UNCRUSTIFY)
+
+
+add_subdirectory(test)

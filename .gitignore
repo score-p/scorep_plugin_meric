@@ -6,6 +6,7 @@
 !*.gitignore
 !*.gitmodules
 # Sources
+!*.c
 !*.cpp
 !*.h
 # Cmake
@@ -18,3 +19,4 @@
 !include/
 !cmake/
 !src/
+!test/
