@@ -18,7 +18,12 @@ SPDX-License-Identifier: CC0-1.0
 
 ```shell
 mkdir -p _build && cd _build
-cmake -DCMAKE_INSTALL_PREFIX=${your_install_prefix} -DCMAKE_BUILD_TYPE=Debug -DSCOREP_CONFIG=/-DSCOREP_CONFIG=${path_to_scorep_config} ../
+cmake \
+  -DCMAKE_INSTALL_PREFIX=${your_install_prefix} \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DSCOREP_CONFIG=${path_to_scorep_config} \
+  -DMeric_ROOT=${path_to_meric_installation} \
+  ../
 make
 ```
 
