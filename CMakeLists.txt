@@ -20,7 +20,6 @@ add_subdirectory(scorep_plugin_cxx_wrapper)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
 set(MERIC_PLUGIN_SRC
     src/meric_plugin.cpp
     src/meric_plugin.h
@@ -41,14 +40,14 @@ include_directories(include)
 install(TARGETS meric_plugin
     LIBRARY DESTINATION lib)
 
-IF(UNCRUSTIFY)
+IF(Uncrustify_FOUND)
 add_custom_command(
   TARGET meric_plugin
   PRE_BUILD
-  COMMAND ${UNCRUSTIFY}
+  COMMAND Uncrustify::uncrustify
   ARGS -c ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg --replace --no-backup ${CMAKE_CURRENT_SOURCE_DIR}/src/*
   )
-ENDIF(UNCRUSTIFY)
+ENDIF(Uncrustify_FOUND)
 
 
 add_subdirectory(test)
