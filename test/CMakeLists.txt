@@ -22,7 +22,7 @@ add_custom_command(
 )
 
 add_custom_target(run_plugin
-  DEPENDS ${PROJECT_BINARY_DIR}/adv.x
+  DEPENDS ${PROJECT_BINARY_DIR}/adv.x meric_plugin
   COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:meric_plugin>
           SCOREP_METRIC_PLUGINS=meric_plugin
           SCOREP_METRIC_MERIC_PLUGIN=foo
@@ -31,4 +31,12 @@ add_custom_target(run_plugin
           SCOREP_ENABLE_TRACING=1
           SCOREP_EXPERIMENT_DIRECTORY=scorep-measurement
           mpirun -n 2 ./adv.x
+)
+
+add_executable(meric_example_basic
+  meric_example_basic.cpp
+)
+target_link_libraries(meric_example_basic
+  PUBLIC
+  Meric::libmeric_ext
 )

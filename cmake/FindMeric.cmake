@@ -90,11 +90,13 @@ if(Meric_FOUND AND NOT TARGET Meric::libmeric)
     set_target_properties(Meric::libmeric PROPERTIES
         IMPORTED_LOCATION "${Meric_LIBRARY}"
         INTERFACE_INCLUDE_DIRECTORIES "${Meric_INCLUDE_DIR}"
+        INTERFACE_LINK_OPTIONS "-fopenmp"
     )
     add_library(Meric::libmeric_ext UNKNOWN IMPORTED)
     set_target_properties(Meric::libmeric_ext PROPERTIES
         IMPORTED_LOCATION "${Meric_EXT_LIB}"
         INTERFACE_INCLUDE_DIRECTORIES "${Meric_EXT_DIR}"
+        INTERFACE_LINK_OPTIONS "-fopenmp"
     )
 endif()
 
