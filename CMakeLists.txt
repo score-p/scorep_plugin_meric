@@ -16,7 +16,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scorep_plugin_common")
 #list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scorep_plugin_cxx_wrapper")
 
-find_package(Uncrustify)
+if ( MERIC_PLUGIN_DEVELOPER_MODE )
+  find_package(Uncrustify)
+endif()
+
 find_package(Meric)
 
 # Intialize git submodules if not done already
@@ -51,14 +54,15 @@ include_directories(include)
 install(TARGETS meric_plugin
     LIBRARY DESTINATION lib)
 
-IF(Uncrustify_FOUND)
-add_custom_command(
-  TARGET meric_plugin
-  PRE_BUILD
-  COMMAND Uncrustify::uncrustify
-  ARGS -c ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg --replace --no-backup ${CMAKE_CURRENT_SOURCE_DIR}/src/*
-  )
-ENDIF(Uncrustify_FOUND)
+if ( MERIC_PLUGIN_DEVELOPER_MODE )
+  if(Uncrustify_FOUND)
+    add_custom_command(
+      TARGET meric_plugin
+      PRE_BUILD
+      COMMAND Uncrustify::uncrustify
+      ARGS -c ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg --replace --no-backup ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
+  endif(Uncrustify_FOUND)
+endif( MERIC_PLUGIN_DEVELOPER_MODE )
 
 
 add_subdirectory(test)

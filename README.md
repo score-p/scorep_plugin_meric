@@ -56,6 +56,18 @@ export SCOREP_EXPERIMENT_DIRECTORY=scorep-measurement
 See the `test/` directory for an example.
 
 
+## Contributing
+
+### Developer tools
+
+Add `-DMERIC_PLUGIN_DEVELOPER_MODE` to your `cmake` command to run some developer tools
+as part of the build process. This includes
+
+- (optional) [Uncrustify](https://github.com/uncrustify/uncrustify) to format CPP/C sources
+
+
+
+
 ## License
 
 License information is provided according to the [Reuse](https://reuse.software/)
