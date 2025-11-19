@@ -28,6 +28,8 @@ set(MERIC_PLUGIN_SRC
     src/meric_measurement.h
     src/energy_metric.cpp
     src/energy_metric.h
+    src/utils.cpp
+    src/utils.h
     )
 
 

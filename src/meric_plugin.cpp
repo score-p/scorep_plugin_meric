@@ -45,40 +45,6 @@ all_domain_names()
     return ss.str();
 }
 
-
-std::vector<std::string>
-split_string( const std::string& str, char delim = ' ' )
-{
-    if ( str == "" )
-    {
-        return {};
-    }
-    size_t                   prev = 0;
-    size_t                   pos  = 0;
-    std::vector<std::string> split;
-    while ( pos != str.npos )
-    {
-        pos = str.find( delim, prev );
-        if ( pos != str.npos )
-        {
-            if ( pos - prev > 0 ) // two consecutive delimiters: do not add the empty string
-            {
-                split.emplace_back( str.substr( prev, pos - prev ) );
-            }
-        }
-        else
-        {
-            if ( prev != str.size() ) // trailing delimiter: do not add the empty string
-            {
-                split.emplace_back( str.substr( prev ) );
-            }
-        }
-        prev = pos + 1;
-    }
-    return split;
-}
-
-
 meric_plugin::meric_plugin() :
     measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "INTERVAL_US", "50000" ) ) ) ),
     energy_domains(

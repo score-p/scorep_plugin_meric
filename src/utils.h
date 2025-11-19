@@ -8,6 +8,12 @@
 
 #include <unordered_map>
 #include <stdexcept>
+#include <vector>
+#include <string>
+
+std::vector<std::string>
+split_string( const std::string& str,
+              char               delim = ' ' );
 
 template <typename K, typename V>
 std::unordered_map<V, K>
