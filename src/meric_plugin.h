@@ -8,6 +8,7 @@
 #pragma once
 
 #include "meric_measurement.h"
+#include <meric_ext.h>
 
 #include <scorep/plugin/plugin.hpp>
 
@@ -26,6 +27,7 @@ class meric_plugin : public scorep::plugin::base<meric_plugin,
 {
 public:
     meric_plugin();
+    ~meric_plugin();
 
     std::vector<scorep::plugin::metric_property>
     get_metric_properties( const std::string& metric_name );
@@ -45,5 +47,7 @@ public:
                     C&             cursor );
 
 private:
-    meric_measurement measurement;
+    meric_measurement                                           measurement;
+    ExtlibEnergy                                                energy_domains;
+    std::unordered_map<unsigned int, std::vector<std::string> > counters_by_domain;
 };
