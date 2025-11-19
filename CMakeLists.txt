@@ -18,6 +18,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scorep_plugin_common"
 
 if ( MERIC_PLUGIN_DEVELOPER_MODE )
   find_package(Uncrustify)
+  find_package(Reuse)
 endif()
 
 find_package(Meric)
@@ -62,6 +63,13 @@ if ( MERIC_PLUGIN_DEVELOPER_MODE )
       COMMAND Uncrustify::uncrustify
       ARGS -c ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg --replace --no-backup ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
   endif(Uncrustify_FOUND)
+  if(Reuse_FOUND)
+    add_custom_command(
+      TARGET meric_plugin
+      POST_BUILD
+      COMMAND Reuse::reuse
+      ARGS lint)
+  endif(Reuse_FOUND)
 endif( MERIC_PLUGIN_DEVELOPER_MODE )
 
 

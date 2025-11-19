@@ -64,7 +64,8 @@ Add `-DMERIC_PLUGIN_DEVELOPER_MODE` to your `cmake` command to run some develope
 as part of the build process. This includes
 
 - (optional) [Uncrustify](https://github.com/uncrustify/uncrustify) to format CPP/C sources
-
+- (optional) [Reuse](https://reuse.software/) to check compliance of project licenses
+  with the reuse specification.
 
 
 
