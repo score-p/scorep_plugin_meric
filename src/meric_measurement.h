@@ -28,6 +28,12 @@ public:
     std::vector<TVPair>&
     readings( energy_metric& handle );
 
+    inline const std::chrono::microseconds
+    interval() const
+    {
+        return _interval;
+    };
+
 private:
     void
     collect_readings();
@@ -39,5 +45,5 @@ private:
 
     std::thread               measurement_thread;
     bool                      active;
-    std::chrono::microseconds interval;
+    std::chrono::microseconds _interval;
 };

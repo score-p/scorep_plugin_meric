@@ -8,7 +8,7 @@
 #include "meric_measurement.h"
 
 
-meric_measurement::meric_measurement( std::chrono::microseconds interval ) : interval( interval )
+meric_measurement::meric_measurement( std::chrono::microseconds interval ) : _interval( interval )
 {
 }
 
@@ -54,6 +54,6 @@ meric_measurement::collect_readings()
             auto&       sequence = item.second;
             sequence.emplace_back( metric.read() );
         }
-        std::this_thread::sleep_for( interval );
+        std::this_thread::sleep_for( _interval );
     }
 }

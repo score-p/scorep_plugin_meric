@@ -17,7 +17,7 @@ using scorep::plugin::logging;
 
 
 meric_plugin::meric_plugin() :
-    measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "interval_us", "50000" ) ) ) )
+    measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "INTERVAL_US", "50000" ) ) ) )
 {
     scorep::plugin::log::set_min_severity_level( nitro::log::severity_level::debug );
 }
