@@ -4,7 +4,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 cmake_minimum_required(VERSION 3.12)
-project(meric_plugin)
+project(meric_plugin
+  VERSION 0.0.0
+  DESCRIPTION "Score-P metric plugin to read energy values with MERIC ExtLib"
+  HOMEPAGE_URL "https://gitlab.jsc.fz-juelich.de/corbin1/scorep_plugin_meric"
+  LANGUAGES CXX C)
+
+include(cmake/PreventInSourceBuilds.cmake)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scorep_plugin_common")
