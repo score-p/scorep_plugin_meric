@@ -50,59 +50,48 @@ The following cache variables may also be set:
 ``Meric_EXT_LIB``
   The full path to libmeric_ext.
 
-
 #]=======================================================================]
 find_path(Meric_INCLUDE_DIR
-    NAMES meric.h
-)
+  NAMES meric.h)
 find_path(Meric_EXT_DIR
-    NAMES meric_ext.h
-)
+  NAMES meric_ext.h)
 find_library(Meric_LIBRARY
-    NAMES meric
-)
+  NAMES meric)
 find_library(Meric_EXT_LIB
-    NAMES meric_ext
-)
+  NAMES meric_ext)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Meric
-    REQUIRED_VARS
-        Meric_INCLUDE_DIR
-        Meric_EXT_DIR
-        Meric_LIBRARY
-        Meric_EXT_LIB
-)
+  REQUIRED_VARS
+    Meric_INCLUDE_DIR
+    Meric_EXT_DIR
+    Meric_LIBRARY
+    Meric_EXT_LIB)
 
 if(Meric_FOUND)
-    set(Meric_LIBRARIES ${Meric_LIBRARY} ${Meric_EXT_LIB})
-    if(${Meric_INCLUDE_DIR} STREQUAL ${Meric_EXT_DIR})
-        set(Meric_INCLUDE_DIRS ${Meric_INCLUDE_DIR})
-    else()
-        set(Meric_INCLUDE_DIRS ${Meric_INCLUDE_DIR} ${Meric_EXT_DIR})
-    endif()
-    message(STATUS "meric include path: ${Meric_INCLUDE_DIRS}")
-    message(STATUS "meric libs path: ${Meric_LIBRARIES}")
+  set(Meric_LIBRARIES ${Meric_LIBRARY} ${Meric_EXT_LIB})
+  if(${Meric_INCLUDE_DIR} STREQUAL ${Meric_EXT_DIR})
+    set(Meric_INCLUDE_DIRS ${Meric_INCLUDE_DIR})
+  else()
+    set(Meric_INCLUDE_DIRS ${Meric_INCLUDE_DIR} ${Meric_EXT_DIR})
+  endif()
 endif()
 
 if(Meric_FOUND AND NOT TARGET Meric::libmeric)
-    add_library(Meric::libmeric UNKNOWN IMPORTED)
-    set_target_properties(Meric::libmeric PROPERTIES
-        IMPORTED_LOCATION "${Meric_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${Meric_INCLUDE_DIR}"
-        INTERFACE_LINK_OPTIONS "-fopenmp"
-    )
-    add_library(Meric::libmeric_ext UNKNOWN IMPORTED)
-    set_target_properties(Meric::libmeric_ext PROPERTIES
-        IMPORTED_LOCATION "${Meric_EXT_LIB}"
-        INTERFACE_INCLUDE_DIRECTORIES "${Meric_EXT_DIR}"
-        INTERFACE_LINK_OPTIONS "-fopenmp"
-    )
+  add_library(Meric::libmeric UNKNOWN IMPORTED)
+  set_target_properties(Meric::libmeric PROPERTIES
+    IMPORTED_LOCATION "${Meric_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${Meric_INCLUDE_DIR}"
+    INTERFACE_LINK_OPTIONS "-fopenmp")
+  add_library(Meric::libmeric_ext UNKNOWN IMPORTED)
+  set_target_properties(Meric::libmeric_ext PROPERTIES
+    IMPORTED_LOCATION "${Meric_EXT_LIB}"
+    INTERFACE_INCLUDE_DIRECTORIES "${Meric_EXT_DIR}"
+    INTERFACE_LINK_OPTIONS "-fopenmp")
 endif()
 
 mark_as_advanced(
   Meric_INCLUDE_DIR
   Meric_LIBRARY
   Meric_EXT_DIR
-  Meric_EXT_LIB
-)
+  Meric_EXT_LIB)
