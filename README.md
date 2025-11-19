@@ -60,7 +60,7 @@ See the `test/` directory for an example.
 
 ### Developer tools
 
-Add `-DMERIC_PLUGIN_DEVELOPER_MODE` to your `cmake` command to run some developer tools
+Add `-DMERIC_PLUGIN_DEVELOPER_MODE=1` to your `cmake` command to run some developer tools
 as part of the build process. This includes
 
 - (optional) [Uncrustify](https://github.com/uncrustify/uncrustify) to format CPP/C sources
