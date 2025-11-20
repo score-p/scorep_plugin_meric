@@ -47,7 +47,16 @@ public:
                     C&             cursor );
 
 private:
-    meric_measurement                                           measurement;
-    ExtlibEnergy                                                energy_domains;
-    std::unordered_map<unsigned int, std::vector<std::string> > counters_by_domain;
+    meric_measurement measurement;
+    ExtlibEnergy      energy_domains;
+
+    struct domain_info
+    {
+        unsigned int                                  id;  // The value in the Domains enum
+        unsigned int                                  idx; // The index in an ExtlibEnergyTimeStamp.domain_data
+
+        std::unordered_map<std::string, unsigned int> counter_id_by_name;
+    };
+
+    std::unordered_map<std::string, domain_info> domain_by_name;
 };

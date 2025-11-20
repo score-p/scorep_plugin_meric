@@ -9,16 +9,20 @@
 
 #include <scorep/plugin/plugin.hpp>
 
+#include <meric_ext.h>
+
 #include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
 
-using TVPair = std::pair<scorep::chrono::ticks, double>;
-
 struct energy_metric
 {
-    energy_metric( const std::string& name );
+    energy_metric( unsigned int domain_idx,
+                   unsigned int domain_id,
+                   std::string  domain_name,
+                   unsigned int counter_idx,
+                   std::string  counter_name );
 
     energy_metric( const energy_metric& ) = delete;
     /* copy-assign */
@@ -34,11 +38,19 @@ struct energy_metric
     bool
     operator==( const energy_metric& other ) const;
 
-    TVPair
-                read() const;
+    size_t
+    id() const;
+    std::string
+    name() const;
 
-    std::string name;
-    TVPair      ref;
+    double
+                 read( const ExtlibEnergyTimeStamp* ts ) const;
+
+    unsigned int domain_idx;  // Index in ExtlibEnergyTimeStamp.domain_data array
+    unsigned int domain_id;   // Domain Id, i.e. value in the ExtlibEnergy::Domains enum
+    std::string  domain_name;
+    unsigned int counter_idx; // Index in ExtlibEnergyTimeStamp.domain_data[domain_idx].energy_per_counter array
+    std::string  counter_name;
 };
 
 
@@ -47,7 +59,7 @@ namespace std
 inline ostream&
 operator<<( ostream& s, const energy_metric& metric )
 {
-    s << "(" << metric.name << ")";
+    s << "(" << metric.domain_name << ":" << metric.counter_name << ")";
     return s;
 }
 
@@ -57,7 +69,7 @@ struct hash<energy_metric>
     size_t inline
     operator()( const energy_metric& metric ) const
     {
-        return std::hash<std::string>{} ( metric.name );
+        return metric.id();
     }
 };
 };

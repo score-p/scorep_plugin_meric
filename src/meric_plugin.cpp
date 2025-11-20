@@ -110,29 +110,35 @@ meric_plugin::meric_plugin() :
         throw std::runtime_error( "Could not read an energy timestamp with MERIC" );
     }
     // Store names of all available counters for all enabled domains
-    for ( const auto& domain: ts->domain_data )
+    for ( unsigned int domain_idx = 0; domain_idx < EXTLIB_NUM_DOMAINS; ++domain_idx )
     {
+        const auto& domain = ts->domain_data[ domain_idx ];
         if ( EXTLIB_ENERGY_HAS_DOMAIN( energy_domains, domain.domain_id ) )
         {
-            counters_by_domain[ domain.domain_id ] = {};
-            counters_by_domain[ domain.domain_id ].reserve( domain.arr_size );
-            for ( unsigned counter_id = 0; counter_id < domain.arr_size; ++counter_id )
+            std::unordered_map<std::string, unsigned int> counter_id_by_name;
+            for ( unsigned counter_idx = 0; counter_idx < domain.arr_size; ++counter_idx )
             {
-                counters_by_domain[ domain.domain_id ].emplace_back( domain.counter_name[ counter_id ] );
+                counter_id_by_name.emplace( domain.counter_name[ counter_idx ], counter_idx );
             }
+            const auto& name = domain_name_by_id.at( domain.domain_id );
+            domain_by_name[ name ] = {
+                .id                 = domain.domain_id,
+                .idx                = domain_idx,
+                .counter_id_by_name = std::move( counter_id_by_name )
+            };
         }
     }
     // Debug output
     unsigned int num_available_counters = 0;
-    for ( auto it : counters_by_domain )
+    for ( auto domain_it : domain_by_name )
     {
         std::stringstream ss;
-        for ( auto counter: it.second )
+        for ( auto counter_it : domain_it.second.counter_id_by_name )
         {
-            ss << counter << ", ";
+            ss << counter_it.first << ", ";
             ++num_available_counters;
         }
-        logging::debug() << " Available " << domain_name_by_id.at( it.first ) << " counters: " << ss.str();
+        logging::debug() << " Available " << domain_it.first << " counters: " << ss.str();
     }
     if ( num_available_counters == 0 )
     {
@@ -146,12 +152,33 @@ meric_plugin::~meric_plugin()
 }
 
 
+
 std::vector<scorep::plugin::metric_property>
 meric_plugin::get_metric_properties( const std::string& metric_name )
 {
-    logging::info() << "get metric properties called with: " << metric_name;
+    logging::debug() << "get metric properties called with: " << metric_name;
+    std::vector<std::string>                                     domain_and_counter = split_string( metric_name, ':' );
+    if ( domain_and_counter.size() != 2 )
+    {
+        logging::warn() << "Metric '" << metric_name << "' has the wrong format. Expected 'DOMAIN:COUNTER'";
+        return {};
+    }
+    const std::string& domain_name  = domain_and_counter[ 0 ];
+    const std::string& counter_name = domain_and_counter[ 1 ];
+    const auto         domain       = this->domain_by_name.find( domain_name );
+    if ( domain == this->domain_by_name.end() )
+    {
+        logging::warn() << "Domain '" << domain_name << "' is not enabled";
+        return {};
+    }
+    const auto counter = domain->second.counter_id_by_name.find( counter_name );
+    if ( counter == domain->second.counter_id_by_name.end() )
+    {
+        logging::warn() << "Counter '" << counter_name << "' is not available for domain '" << domain_name << "'";
+        return {};
+    }
 
-    make_handle( metric_name, metric_name );
+    make_handle( metric_name, domain->second.idx, domain->second.id, domain_name, counter->second, counter_name );
 
     // Must use the same name here as for the handle you made earlier.
     return { scorep::plugin::metric_property(
@@ -164,13 +191,13 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
 void
 meric_plugin::add_metric( energy_metric& metric )
 {
-    logging::info() << "add metric called with: " << metric.name;
+    logging::info() << "add metric called with: " << metric.name();
 }
 
 void
 meric_plugin::start()
 {
-    measurement.start( get_handles() );
+    measurement.start( &this->energy_domains, get_handles() );
 }
 
 void
@@ -183,7 +210,7 @@ template <typename C>
 void
 meric_plugin::get_all_values( energy_metric& metric, C& cursor )
 {
-    logging::info() << "get_all_values called with: " << metric.name;
+    logging::info() << "get_all_values called with: " << metric.name();
 
     // write the collected data to the cursor.
     for ( auto& tvpair : measurement.readings( metric ) )

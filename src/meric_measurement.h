@@ -9,6 +9,8 @@
 
 #include "energy_metric.h"
 
+#include <meric_ext.h>
+
 #include <chrono>
 #include <vector>
 #include <unordered_map>
@@ -16,11 +18,13 @@
 
 class meric_measurement
 {
+    using TVPair = std::pair<scorep::chrono::ticks, double>;
 public:
     meric_measurement( std::chrono::microseconds interval );
 
     void
-    start( const std::vector<energy_metric>& handles );
+    start( ExtlibEnergy*                     energy_domains,
+           const std::vector<energy_metric>& handles );
 
     void
     stop();
@@ -46,4 +50,5 @@ private:
     std::thread               measurement_thread;
     bool                      active;
     std::chrono::microseconds _interval;
+    ExtlibEnergy*             energy_domains;
 };

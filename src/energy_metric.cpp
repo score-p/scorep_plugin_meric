@@ -12,22 +12,36 @@
 #include <chrono>
 #include <string>
 
-
-energy_metric::energy_metric( const std::string& name )
-    : name( name ), ref( scorep::chrono::measurement_clock::now(), 0 )
+energy_metric::energy_metric( unsigned int domain_idx, unsigned int domain_id, std::string domain_name, unsigned int counter_idx, std::string counter_name ) :
+    domain_idx( domain_idx ),
+    domain_id( domain_id ),
+    domain_name( domain_name ),
+    counter_idx( counter_idx ),
+    counter_name( counter_name )
 {
 }
 
+size_t
+energy_metric::id() const
+{
+    return this->counter_idx * EXTLIB_NUM_DOMAINS + this->domain_idx;
+}
+
+std::string
+energy_metric::name() const
+{
+    return this->domain_name + ":" + this->counter_name;
+}
 
 bool
 energy_metric::operator==( const energy_metric& other ) const
 {
-    return this->name == other.name;
+    return this->id() == other.id();
 }
 
-TVPair
-energy_metric::read() const
+
+double
+energy_metric::read( const ExtlibEnergyTimeStamp* ts ) const
 {
-    const auto timestamp = scorep::chrono::measurement_clock::now();
-    return TVPair( timestamp, 10. * ( timestamp - ref.first ).count() );
+    return ts->domain_data[ this->domain_idx ].energy_per_counter[ this->counter_idx ];
 }
