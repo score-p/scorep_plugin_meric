@@ -22,3 +22,7 @@
 !cmake/
 !src/
 !test/
+
+# Submodules
+!scorep_plugin_common/
+!scorep_plugin_cxx_wrapper/
