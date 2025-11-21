@@ -23,7 +23,7 @@ add_custom_command(
 
 add_custom_target(run_plugin
   DEPENDS ${PROJECT_BINARY_DIR}/adv.x meric_plugin
-  COMMAND LD_LIBRARY_PATH="$<TARGET_FILE_DIR:meric_plugin>:$LD_LIBRARY_PATH"
+  COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:meric_plugin>:$ENV{LD_LIBRARY_PATH}
           SCOREP_METRIC_PLUGINS=meric_plugin
           SCOREP_METRIC_MERIC_PLUGIN=RAPL:package_0
           SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_US=20000
