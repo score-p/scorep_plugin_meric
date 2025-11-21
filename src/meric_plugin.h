@@ -13,10 +13,24 @@
 #include <scorep/plugin/plugin.hpp>
 
 #include <vector>
+#include <iostream>
+
+struct domain_info
+{
+    unsigned int                                  id;  // The value in the Domains enum
+    unsigned int                                  idx; // The index in an ExtlibEnergyTimeStamp.domain_data
+
+    std::unordered_map<std::string, unsigned int> counter_id_by_name;
+};
+
+std::ostream&
+operator<<( std::ostream&      os,
+            const domain_info& domain );
 
 
 template <typename P, typename Policies>
 using meric_object_id = scorep::plugin::policy::object_id<energy_metric, P, Policies>;
+
 
 class meric_plugin : public scorep::plugin::base<meric_plugin,
                                                  scorep::plugin::policy::async,
@@ -49,14 +63,6 @@ public:
 private:
     meric_measurement measurement;
     ExtlibEnergy      energy_domains;
-
-    struct domain_info
-    {
-        unsigned int                                  id;  // The value in the Domains enum
-        unsigned int                                  idx; // The index in an ExtlibEnergyTimeStamp.domain_data
-
-        std::unordered_map<std::string, unsigned int> counter_id_by_name;
-    };
 
     std::unordered_map<std::string, domain_info> domain_by_name;
 

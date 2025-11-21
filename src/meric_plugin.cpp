@@ -108,7 +108,7 @@ meric_plugin::finalize_meric_extlib( ExtlibEnergy* energy_domains ) const
 }
 
 
-std::unordered_map<std::string, meric_plugin::domain_info>
+std::unordered_map<std::string, domain_info>
 meric_plugin::query_available_counters( ExtlibEnergy* energy_domains ) const
 {
     std::unordered_map<std::string, domain_info> domain_by_name;
@@ -161,13 +161,8 @@ meric_plugin::meric_plugin() :
     unsigned int num_available_counters = 0;
     for ( auto domain_it : domain_by_name )
     {
-        std::stringstream ss;
-        for ( auto counter_it : domain_it.second.counter_id_by_name )
-        {
-            ss << counter_it.first << ", ";
-            ++num_available_counters;
-        }
-        logging::debug() << " Available " << domain_it.first << " counters: " << ss.str();
+        logging::debug() << domain_it.second;
+        num_available_counters += domain_it.second.counter_id_by_name.size();
     }
     if ( num_available_counters == 0 )
     {
@@ -245,6 +240,17 @@ meric_plugin::get_all_values( energy_metric& metric, C& cursor )
     {
         cursor.write( tvpair.first, tvpair.second );
     }
+}
+
+std::ostream&
+operator<<( std::ostream& os, const domain_info& domain )
+{
+    os << " Available " << domain_name_by_id.at( domain.id ) << " counters: ";
+    for ( auto counter_it : domain.counter_id_by_name )
+    {
+        os << counter_it.first << ", ";
+    }
+    return os;
 }
 
 
