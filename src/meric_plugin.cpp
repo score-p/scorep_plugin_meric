@@ -52,8 +52,6 @@ meric_plugin::meric_plugin() :
     0
 } )
 {
-    scorep::plugin::log::set_min_severity_level( nitro::log::severity_level::debug );
-
     logging::debug() << "Measurement interval: " << measurement.interval().count() << "microseconds";
 
     // Parse the DOMAINS environment variable for the domains the user requests
