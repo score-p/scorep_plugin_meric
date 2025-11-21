@@ -45,45 +45,45 @@ all_domain_names()
     return ss.str();
 }
 
-meric_plugin::meric_plugin() :
-    measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "INTERVAL_US", "50000" ) ) ) ),
-    energy_domains(
+std::vector<unsigned int>
+meric_plugin::requested_domains_from_env() const
 {
-    0
-} )
-{
-    logging::debug() << "Measurement interval: " << measurement.interval().count() << "microseconds";
-
     // Parse the DOMAINS environment variable for the domains the user requests
     std::string               env_requested_domains = scorep::environment_variable::get( "DOMAINS", "ALL" );
     std::vector<unsigned int> requested_domains;
     if ( env_requested_domains == "" )
     {
         logging::warn() << "No energy domains requested. Set " << scorep::environment_variable::name( "DOMAINS" ) << " to " << all_domain_names() << " or ALL";
+        return {};
     }
-    else if ( env_requested_domains == "ALL" )
+    if ( env_requested_domains == "ALL" )
     {
         for ( auto item : domain_id_by_name )
         {
             requested_domains.emplace_back( item.second );
         }
+        return requested_domains;
     }
-    else // expecting a comma-separated list of energy domains
+    // expecting a comma-separated list of energy domains
+    for ( std::string name : split_string( env_requested_domains, ',' ) )
     {
-        for ( std::string name : split_string( env_requested_domains, ',' ) )
+        const auto it = domain_id_by_name.find( name );
+        if ( it != domain_id_by_name.end() )
         {
-            const auto it = domain_id_by_name.find( name );
-            if ( it != domain_id_by_name.end() )
-            {
-                requested_domains.emplace_back( it->second );
-            }
-            else
-            {
-                logging::warn() << "Unsupported domain name '" << name << "' in " << scorep::environment_variable::name( "DOMAINS" ) << " Set to " << all_domain_names() << " or ALL";
-            }
+            requested_domains.emplace_back( it->second );
+        }
+        else
+        {
+            logging::warn() << "Unsupported domain name '" << name << "' in " << scorep::environment_variable::name( "DOMAINS" ) << " Set to " << all_domain_names() << " or ALL";
         }
     }
+    return requested_domains;
+}
 
+ExtlibEnergy
+meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_domains ) const
+{
+    ExtlibEnergy energy_domains;
     // Try to enable the requested domains
     for ( const unsigned int domain : requested_domains )
     {
@@ -98,10 +98,23 @@ meric_plugin::meric_plugin() :
             logging::warn() << "Domain '" << domain_name_by_id.at( domain ) << "' was requested but could not be enabled";
         }
     }
+    return energy_domains;
+}
 
+void
+meric_plugin::finalize_meric_extlib( ExtlibEnergy* energy_domains ) const
+{
+    extlib_close( energy_domains );
+}
+
+
+std::unordered_map<std::string, meric_plugin::domain_info>
+meric_plugin::query_available_counters( ExtlibEnergy* energy_domains ) const
+{
+    std::unordered_map<std::string, domain_info> domain_by_name;
     // Try to read an energy timestamp, which contains information on the available
     // counters for each domain.
-    ExtlibEnergyTimeStamp* ts = extlib_read_energy_measurements( &energy_domains );
+    ExtlibEnergyTimeStamp* ts = extlib_read_energy_measurements( energy_domains );
     if ( ts == nullptr )
     {
         // Reading the timestamp failed: The plug-in is not usable.
@@ -111,7 +124,7 @@ meric_plugin::meric_plugin() :
     for ( unsigned int domain_idx = 0; domain_idx < EXTLIB_NUM_DOMAINS; ++domain_idx )
     {
         const auto& domain = ts->domain_data[ domain_idx ];
-        if ( EXTLIB_ENERGY_HAS_DOMAIN( energy_domains, domain.domain_id ) )
+        if ( EXTLIB_ENERGY_HAS_DOMAIN( *energy_domains, domain.domain_id ) )
         {
             std::unordered_map<std::string, unsigned int> counter_id_by_name;
             for ( unsigned counter_idx = 0; counter_idx < domain.arr_size; ++counter_idx )
@@ -126,6 +139,24 @@ meric_plugin::meric_plugin() :
             };
         }
     }
+    return domain_by_name;
+}
+
+
+meric_plugin::meric_plugin() :
+    measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "INTERVAL_US", "50000" ) ) ) ),
+    energy_domains(
+{
+    0
+} )
+{
+    logging::debug() << "Measurement interval: " << measurement.interval().count() << " microseconds";
+
+    std::vector<unsigned int> requested_domains = requested_domains_from_env();
+    this->energy_domains = init_meric_extlib( requested_domains );
+    this->domain_by_name = query_available_counters( &this->energy_domains );
+
+
     // Debug output
     unsigned int num_available_counters = 0;
     for ( auto domain_it : domain_by_name )
@@ -146,9 +177,8 @@ meric_plugin::meric_plugin() :
 
 meric_plugin::~meric_plugin()
 {
-    extlib_close( &energy_domains );
+    finalize_meric_extlib( &energy_domains );
 }
-
 
 
 std::vector<scorep::plugin::metric_property>

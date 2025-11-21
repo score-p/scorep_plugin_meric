@@ -59,4 +59,18 @@ private:
     };
 
     std::unordered_map<std::string, domain_info> domain_by_name;
+
+
+private:
+    std::vector<unsigned int>
+    requested_domains_from_env() const;
+
+    ExtlibEnergy
+    init_meric_extlib( const std::vector<unsigned int>& requested_domains ) const;
+
+    void
+    finalize_meric_extlib( ExtlibEnergy* energy_domains ) const;
+
+    std::unordered_map<std::string, domain_info>
+    query_available_counters( ExtlibEnergy* energy_domains ) const;
 };
