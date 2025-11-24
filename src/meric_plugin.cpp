@@ -80,6 +80,10 @@ meric_plugin::requested_domains_from_env() const
     return requested_domains;
 }
 
+// We only need space for one measurement at a time, but a little bit
+// extra does not hurt.
+static constexpr unsigned int extlib_reserve_for_total_measurements = 3;
+
 void
 meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_domains, ExtlibEnergy* energy_domains ) const
 {
@@ -88,6 +92,7 @@ meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_doma
     {
         EXTLIB_ENERGY_ENABLE_DOMAIN( *energy_domains, domain );
     }
+    EXTLIB_ENERGY_USE_RESERVED_MEMORY( *energy_domains, extlib_reserve_for_total_measurements );
     extlib_init( energy_domains, /*is_detailed = */ true );
     // Warn if any requested domains could not be enabled
     for ( const unsigned int domain : requested_domains )
