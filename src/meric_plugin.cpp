@@ -80,25 +80,23 @@ meric_plugin::requested_domains_from_env() const
     return requested_domains;
 }
 
-ExtlibEnergy
-meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_domains ) const
+void
+meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_domains, ExtlibEnergy* energy_domains ) const
 {
-    ExtlibEnergy energy_domains;
     // Try to enable the requested domains
     for ( const unsigned int domain : requested_domains )
     {
-        EXTLIB_ENERGY_ENABLE_DOMAIN( energy_domains, domain );
+        EXTLIB_ENERGY_ENABLE_DOMAIN( *energy_domains, domain );
     }
-    extlib_init( &energy_domains, /*is_detailed = */ true );
+    extlib_init( energy_domains, /*is_detailed = */ true );
     // Warn if any requested domains could not be enabled
     for ( const unsigned int domain : requested_domains )
     {
-        if ( not EXTLIB_ENERGY_HAS_DOMAIN( energy_domains, domain ) )
+        if ( not EXTLIB_ENERGY_HAS_DOMAIN( *energy_domains, domain ) )
         {
             logging::warn() << "Domain '" << domain_name_by_id.at( domain ) << "' was requested but could not be enabled";
         }
     }
-    return energy_domains;
 }
 
 void
@@ -153,7 +151,7 @@ meric_plugin::meric_plugin() :
     logging::debug() << "Measurement interval: " << measurement.interval().count() << " microseconds";
 
     std::vector<unsigned int> requested_domains = requested_domains_from_env();
-    this->energy_domains = init_meric_extlib( requested_domains );
+    init_meric_extlib( requested_domains, &this->energy_domains );
     this->domain_by_name = query_available_counters( &this->energy_domains );
 
 
