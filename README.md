@@ -7,6 +7,7 @@ SPDX-License-Identifier: CC0-1.0
 
 ## Prerequisites
 
+- C++ compiler, supporting at least `c++14`
 - [CMake](https://cmake.org/) > 3.12
 - [Score-P](https://score-p.org/) > 6.0
 - [MERIC](https://code.it4i.cz/energy-efficiency/meric-suite/meric):  with **[extlib](https://code.it4i.cz/energy-efficiency/meric-suite/meric/-/tree/external/src/extlib?ref_type=heads)**

@@ -45,6 +45,7 @@ set(MERIC_PLUGIN_SRC
 
 add_library(meric_plugin SHARED ${MERIC_PLUGIN_SRC})
 target_compile_features(meric_plugin PUBLIC cxx_std_14)
+target_compile_options(meric_plugin INTERFACE -Wall -pedantic -Wextra)
 target_link_libraries(meric_plugin PUBLIC
   scorep-plugin-cxx
   Meric::libmeric_ext)
