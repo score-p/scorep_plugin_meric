@@ -7,9 +7,9 @@ SPDX-License-Identifier: CC0-1.0
 
 ## Prerequisites
 
-- CMake > 3.10
-- Score-P
-- MERIC extlib
+- [CMake](https://cmake.org/) > 3.12
+- [Score-P](https://score-p.org/) > 6.0
+- [MERIC](https://code.it4i.cz/energy-efficiency/meric-suite/meric):  with **[extlib](https://code.it4i.cz/energy-efficiency/meric-suite/meric/-/tree/external/src/extlib?ref_type=heads)**
 
 
 ## Quick start
@@ -38,11 +38,14 @@ See also the documentation on [Score-P metric plugins](https://perftools.pages.j
 
 ```shell
 # Plugin is dynamically linked, provide the location of the plugin here
-export LD_LIBRARY_PATH=${your_install_prefix}/lib
-# Tell Score-P to use the 'meric_plugin', the names of the metrics to collect,
-# and the sampling interval (in milliseconds).
+export LD_LIBRARY_PATH="${your_install_prefix}/lib:$LD_LIBRARY_PATH"
+# Tell Score-P to use the 'meric_plugin'
 export SCOREP_METRIC_PLUGINS=meric_plugin
-export SCOREP_METRIC_MERIC_PLUGIN=foo
+# List the metrics that should be recorded
+export SCOREP_METRIC_MERIC_PLUGIN=RAPL:package_0
+# List the Meric energy domains that should be enabled
+export SCOREP_METRIC_MERIC_PLUGIN_DOMAINS=RAPL,
+# Set the sampling interval
 export SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_MS=20000
 # This plugin is per-host, async, which only works with tracing
 export SCOREP_ENABLE_PROFILING=0
@@ -66,7 +69,6 @@ as part of the build process. This includes
 - (optional) [Uncrustify](https://github.com/uncrustify/uncrustify) to format CPP/C sources
 - (optional) [Reuse](https://reuse.software/) to check compliance of project licenses
   with the reuse specification.
-
 
 
 ## License
