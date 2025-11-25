@@ -14,6 +14,7 @@ meric_measurement::meric_measurement( std::chrono::microseconds interval ) : _in
 {
 }
 
+
 void
 meric_measurement::start( ExtlibEnergy* energy_domains, const std::vector<energy_metric>& handles )
 {
@@ -30,6 +31,7 @@ meric_measurement::start( ExtlibEnergy* energy_domains, const std::vector<energy
     this->energy_domains = energy_domains;
 }
 
+
 void
 meric_measurement::stop()
 {
@@ -40,11 +42,13 @@ meric_measurement::stop()
     }
 }
 
+
 std::vector<meric_measurement::TVPair>&
 meric_measurement::readings( energy_metric& handle )
 {
     return data[ handle ];
 }
+
 
 void
 meric_measurement::collect_readings()

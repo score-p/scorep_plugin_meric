@@ -21,6 +21,7 @@ using scorep::plugin::logging;
 
 using Domains = ExtlibEnergy::Domains;
 
+
 static const std::unordered_map<std::string, unsigned int> domain_id_by_name = {
     { "A64FX", Domains::EXTLIB_ENERGY_DOMAIN_A64FX },
     { "RAPL",  Domains::EXTLIB_ENERGY_DOMAIN_RAPL  },
@@ -29,6 +30,7 @@ static const std::unordered_map<std::string, unsigned int> domain_id_by_name = {
     { "HDEEM", Domains::EXTLIB_ENERGY_DOMAIN_HDEEM },
     { "HWMON", Domains::EXTLIB_ENERGY_DOMAIN_HWMON }
 };
+
 
 static const std::unordered_map<unsigned int, std::string> domain_name_by_id =
     map_inverse<std::string, unsigned int>( domain_id_by_name );
@@ -44,6 +46,7 @@ all_domain_names()
     }
     return ss.str();
 }
+
 
 std::vector<unsigned int>
 meric_plugin::requested_domains_from_env() const
@@ -80,9 +83,11 @@ meric_plugin::requested_domains_from_env() const
     return requested_domains;
 }
 
+
 // We only need space for one measurement at a time, but a little bit
 // extra does not hurt.
 static constexpr unsigned int extlib_reserve_for_total_measurements = 3;
+
 
 void
 meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_domains, ExtlibEnergy* energy_domains ) const
@@ -103,6 +108,7 @@ meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_doma
         }
     }
 }
+
 
 void
 meric_plugin::finalize_meric_extlib( ExtlibEnergy* energy_domains ) const
@@ -173,6 +179,7 @@ meric_plugin::meric_plugin() :
     }
 }
 
+
 meric_plugin::~meric_plugin()
 {
     finalize_meric_extlib( &energy_domains );
@@ -214,11 +221,13 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
                  ).absolute_point().value_double().decimal() };
 }
 
+
 void
 meric_plugin::add_metric( energy_metric& metric )
 {
     logging::info() << "add metric called with: " << metric.name();
 }
+
 
 void
 meric_plugin::start()
@@ -226,11 +235,13 @@ meric_plugin::start()
     measurement.start( &this->energy_domains, get_handles() );
 }
 
+
 void
 meric_plugin::stop()
 {
     measurement.stop();
 }
+
 
 template <typename C>
 void
@@ -244,6 +255,7 @@ meric_plugin::get_all_values( energy_metric& metric, C& cursor )
         cursor.write( tvpair.first, tvpair.second );
     }
 }
+
 
 std::ostream&
 operator<<( std::ostream& os, const domain_info& domain )

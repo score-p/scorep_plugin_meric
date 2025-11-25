@@ -15,6 +15,7 @@
 #include <vector>
 #include <iostream>
 
+
 struct domain_info
 {
     unsigned int                                  id;  // The value in the Domains enum
@@ -23,9 +24,11 @@ struct domain_info
     std::unordered_map<std::string, unsigned int> counter_id_by_name;
 };
 
+
 std::ostream&
 operator<<( std::ostream&      os,
             const domain_info& domain );
+
 
 
 template <typename P, typename Policies>
@@ -65,7 +68,6 @@ private:
     ExtlibEnergy      energy_domains;
 
     std::unordered_map<std::string, domain_info> domain_by_name;
-
 
 private:
     std::vector<unsigned int>

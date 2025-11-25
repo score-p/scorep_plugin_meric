@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <thread>
 
+
 class meric_measurement
 {
     using TVPair = std::pair<scorep::chrono::ticks, double>;

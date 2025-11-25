@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+
 struct energy_metric
 {
     energy_metric( unsigned int domain_idx,
@@ -62,6 +63,7 @@ operator<<( ostream& s, const energy_metric& metric )
     s << "(" << metric.domain_name << ":" << metric.counter_name << ")";
     return s;
 }
+
 
 template <>
 struct hash<energy_metric>

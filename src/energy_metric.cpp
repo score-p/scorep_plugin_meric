@@ -12,6 +12,7 @@
 #include <chrono>
 #include <string>
 
+
 energy_metric::energy_metric( unsigned int domain_idx, unsigned int domain_id, std::string domain_name, unsigned int counter_idx, std::string counter_name ) :
     domain_idx( domain_idx ),
     domain_id( domain_id ),
@@ -21,17 +22,20 @@ energy_metric::energy_metric( unsigned int domain_idx, unsigned int domain_id, s
 {
 }
 
+
 size_t
 energy_metric::id() const
 {
     return this->counter_idx * EXTLIB_NUM_DOMAINS + this->domain_idx;
 }
 
+
 std::string
 energy_metric::name() const
 {
     return this->domain_name + ":" + this->counter_name;
 }
+
 
 bool
 energy_metric::operator==( const energy_metric& other ) const
