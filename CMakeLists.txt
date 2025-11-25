@@ -51,10 +51,20 @@ target_link_libraries(meric_plugin PUBLIC
   Meric::libmeric_ext)
 target_include_directories(meric_plugin PUBLIC include)
 
+add_executable(show_counters src/show_counters.cpp ${MERIC_PLUGIN_SRC})
+target_compile_features(show_counters PUBLIC cxx_std_14)
+target_compile_options(show_counters INTERFACE -Wall -pedantic -Wextra)
+target_link_libraries(show_counters PUBLIC
+  scorep-plugin-cxx
+  Meric::libmeric_ext)
+
 include_directories(include)
 
 install(TARGETS meric_plugin
     LIBRARY DESTINATION lib)
+
+install(TARGETS show_counters
+    RUNTIME DESTINATION bin )
 
 if ( MERIC_PLUGIN_DEVELOPER_MODE )
   if(Uncrustify_FOUND)

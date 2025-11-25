@@ -63,6 +63,9 @@ public:
     get_all_values( energy_metric& metric,
                     C&             cursor );
 
+    static std::unordered_map<std::string, domain_info>
+    available_domains_and_counters();
+
 private:
     meric_measurement measurement;
     ExtlibEnergy      energy_domains;
@@ -70,15 +73,16 @@ private:
     std::unordered_map<std::string, domain_info> domain_by_name;
 
 private:
-    std::vector<unsigned int>
-    requested_domains_from_env() const;
+    static std::vector<unsigned int>
+    requested_domain_names( std::string env_str );
 
-    void
-    init_meric_extlib( const std::vector<unsigned int>& requested_domains, ExtlibEnergy* energy_domains ) const;
+    static void
+    init_meric_extlib( const std::vector<unsigned int>& requested_domains,
+                       ExtlibEnergy*                    energy_domains );
 
-    void
-    finalize_meric_extlib( ExtlibEnergy* energy_domains ) const;
+    static void
+    finalize_meric_extlib( ExtlibEnergy* energy_domains );
 
-    std::unordered_map<std::string, domain_info>
-    query_available_counters( ExtlibEnergy* energy_domains ) const;
+    static std::unordered_map<std::string, domain_info>
+    query_available_counters( ExtlibEnergy* energy_domains );
 };
