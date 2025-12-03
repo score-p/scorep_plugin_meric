@@ -96,7 +96,8 @@ std::vector<scorep::plugin::metric_property>
 meric_plugin::get_metric_properties( const std::string& metric_name )
 {
     logging::debug() << "get metric properties called with: " << metric_name;
-    std::vector<std::string>                                     domain_and_counter = split_string( metric_name, ':' );
+
+    std::vector<std::string> domain_and_counter = split_string( metric_name, ':' );
     if ( domain_and_counter.size() != 2 )
     {
         logging::warn() << "Metric '" << metric_name << "' has the wrong format. Expected 'DOMAIN:COUNTER'";

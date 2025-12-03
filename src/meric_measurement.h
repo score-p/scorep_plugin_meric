@@ -16,7 +16,6 @@
 #include <vector>
 
 
-
 class meric_measurement
 {
     using TVPair = std::pair<scorep::chrono::ticks, double>;

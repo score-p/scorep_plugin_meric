@@ -36,17 +36,6 @@ operator<<( std::ostream&      os,
 
 class ExtlibWrapper
 {
-    struct extlib_deleter
-    {
-        void
-        operator()( ExtlibEnergy* energy_domains ) const
-        {
-            extlib_close( energy_domains );
-        }
-    };
-
-    using ExtlibEnergyPtr = std::unique_ptr<ExtlibEnergy, extlib_deleter>;
-
 public:
 
     static const std::unordered_map<std::string, unsigned int> domain_id_by_name;
@@ -77,5 +66,16 @@ public:
 
 
 private:
+    struct extlib_deleter
+    {
+        void
+        operator()( ExtlibEnergy* energy_domains ) const
+        {
+            extlib_close( energy_domains );
+        }
+    };
+
+    using ExtlibEnergyPtr = std::unique_ptr<ExtlibEnergy, extlib_deleter>;
+
     ExtlibEnergyPtr energy_domains;
 };
