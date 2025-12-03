@@ -7,9 +7,8 @@
  */
 #pragma once
 
-#include <scorep/plugin/plugin.hpp>
-
 #include <meric_ext.h>
+#include <scorep/plugin/plugin.hpp>
 
 #include <chrono>
 #include <iostream>

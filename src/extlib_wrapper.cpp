@@ -5,7 +5,7 @@
  *
  */
 
-#include "meric_extlib.h"
+#include "extlib_wrapper.h"
 
 #include <scorep/plugin/plugin.hpp>
 

@@ -10,11 +10,7 @@
 
 #include <scorep/plugin/plugin.hpp>
 
-#include <meric_ext.h>
-
-#include <vector>
 #include <chrono>
-#include <memory>
 
 
 using scorep::plugin::logging;

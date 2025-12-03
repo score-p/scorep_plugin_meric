@@ -7,8 +7,6 @@
  */
 #include "meric_measurement.h"
 
-#include <meric_ext.h>
-
 
 meric_measurement::meric_measurement( std::chrono::microseconds interval ) : _interval( interval )
 {

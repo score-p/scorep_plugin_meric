@@ -6,14 +6,16 @@
  */
 #pragma once
 
+#include "utils.h"
+
 #include <meric_ext.h>
 
-#include <vector>
 #include <memory>
-#include <unordered_map>
+#include <ostream>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-#include "utils.h"
 
 
 struct domain_info

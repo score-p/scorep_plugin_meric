@@ -8,14 +8,11 @@
 #pragma once
 
 #include "meric_measurement.h"
-#include "meric_extlib.h"
+#include "extlib_wrapper.h"
 
 #include <scorep/plugin/plugin.hpp>
 
 #include <vector>
-#include <iostream>
-#include <memory>
-
 
 
 template <typename P, typename Policies>

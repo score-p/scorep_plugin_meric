@@ -34,8 +34,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(MERIC_PLUGIN_SRC
     src/energy_metric.cpp
     src/energy_metric.h
-    src/meric_extlib.cpp
-    src/meric_extlib.h
+    src/extlib_wrapper.cpp
+    src/extlib_wrapper.h
     src/meric_measurement.cpp
     src/meric_measurement.h
     src/meric_plugin.cpp
