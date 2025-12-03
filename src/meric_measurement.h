@@ -8,25 +8,12 @@
 #pragma once
 
 #include "energy_metric.h"
-
-#include <meric_ext.h>
+#include "meric_extlib.h"
 
 #include <chrono>
 #include <vector>
 #include <unordered_map>
 #include <thread>
-
-
-struct extlib_deleter
-{
-    void
-    operator()( ExtlibEnergy* energy_domains ) const
-    {
-        extlib_close( energy_domains );
-    }
-};
-
-using ExtlibEnergyPtr = std::unique_ptr<ExtlibEnergy, extlib_deleter>;
 
 
 

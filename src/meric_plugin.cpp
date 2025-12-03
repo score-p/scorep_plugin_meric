@@ -20,23 +20,6 @@
 using scorep::plugin::logging;
 
 
-using Domains = ExtlibEnergy::Domains;
-
-
-static const std::unordered_map<std::string, unsigned int> domain_id_by_name = {
-    { "A64FX", Domains::EXTLIB_ENERGY_DOMAIN_A64FX },
-    { "RAPL",  Domains::EXTLIB_ENERGY_DOMAIN_RAPL  },
-    { "NVML",  Domains::EXTLIB_ENERGY_DOMAIN_NVML  },
-    { "ROCM",  Domains::EXTLIB_ENERGY_DOMAIN_ROCM  },
-    { "HDEEM", Domains::EXTLIB_ENERGY_DOMAIN_HDEEM },
-    { "HWMON", Domains::EXTLIB_ENERGY_DOMAIN_HWMON }
-};
-
-
-static const std::unordered_map<unsigned int, std::string> domain_name_by_id =
-    map_inverse<std::string, unsigned int>( domain_id_by_name );
-
-
 static std::string
 all_domain_names()
 {
@@ -81,34 +64,6 @@ meric_plugin::requested_domain_names( std::string env_str )
         }
     }
     return requested_domains;
-}
-
-
-// We only need space for one measurement at a time, but a little bit
-// extra does not hurt.
-static constexpr unsigned int extlib_reserve_for_total_measurements = 3;
-
-
-ExtlibEnergyPtr
-meric_plugin::init_meric_extlib( const std::vector<unsigned int>& requested_domains )
-{
-    ExtlibEnergyPtr energy_domains( new ExtlibEnergy );
-    // Try to enable the requested domains
-    for ( const unsigned int domain : requested_domains )
-    {
-        EXTLIB_ENERGY_ENABLE_DOMAIN( *energy_domains, domain );
-    }
-    EXTLIB_ENERGY_USE_RESERVED_MEMORY( *energy_domains, extlib_reserve_for_total_measurements );
-    extlib_init( energy_domains.get(), /*is_detailed = */ true );
-    // Warn if any requested domains could not be enabled
-    for ( const unsigned int domain : requested_domains )
-    {
-        if ( not EXTLIB_ENERGY_HAS_DOMAIN( *energy_domains, domain ) )
-        {
-            logging::warn() << "Domain '" << domain_name_by_id.at( domain ) << "' was requested but could not be enabled";
-        }
-    }
-    return energy_domains;
 }
 
 

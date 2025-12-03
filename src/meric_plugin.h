@@ -8,7 +8,7 @@
 #pragma once
 
 #include "meric_measurement.h"
-#include <meric_ext.h>
+#include "meric_extlib.h"
 
 #include <scorep/plugin/plugin.hpp>
 
@@ -76,9 +76,6 @@ private:
 private:
     static std::vector<unsigned int>
     requested_domain_names( std::string env_str );
-
-    static ExtlibEnergyPtr
-    init_meric_extlib( const std::vector<unsigned int>& requested_domains );
 
     static std::unordered_map<std::string, domain_info>
     query_available_counters( ExtlibEnergy* energy_domains );
