@@ -29,18 +29,50 @@ const std::unordered_map<unsigned int, std::string> domain_name_by_id =
     map_inverse<std::string, unsigned int>( domain_id_by_name );
 
 
-struct extlib_deleter
+struct domain_info
 {
-    void
-    operator()( ExtlibEnergy* energy_domains ) const
-    {
-        extlib_close( energy_domains );
-    }
+    unsigned int                                  id;  // The value in the Domains enum
+    unsigned int                                  idx; // The index in an ExtlibEnergyTimeStamp.domain_data
+
+    std::unordered_map<std::string, unsigned int> counter_id_by_name;
 };
 
 
-using ExtlibEnergyPtr = std::unique_ptr<ExtlibEnergy, extlib_deleter>;
+std::ostream&
+operator<<( std::ostream&      os,
+            const domain_info& domain );
 
 
-ExtlibEnergyPtr
-init_meric_extlib( const std::vector<unsigned int>& requested_domains );
+
+
+class ExtlibWrapper
+{
+    struct extlib_deleter
+    {
+        void
+        operator()( ExtlibEnergy* energy_domains ) const
+        {
+            extlib_close( energy_domains );
+        }
+    };
+
+    using ExtlibEnergyPtr = std::unique_ptr<ExtlibEnergy, extlib_deleter>;
+
+public:
+
+    ExtlibWrapper();
+    ExtlibWrapper( const std::vector<unsigned int>& requested_domains );
+    std::unordered_map<std::string, domain_info>
+    query_available_counters();
+
+    ExtlibEnergyTimeStamp*
+    read();
+
+    static ExtlibEnergyTimeStamp*
+    calc_energy_consumption( ExtlibEnergyTimeStamp* begin,
+                             ExtlibEnergyTimeStamp* end );
+
+
+private:
+    ExtlibEnergyPtr energy_domains;
+};

@@ -24,10 +24,10 @@ public:
     meric_measurement( std::chrono::microseconds interval );
 
     void
-    start( ExtlibEnergyPtr                   energy_domains,
+    start( ExtlibWrapper                     extlib,
            const std::vector<energy_metric>& handles );
 
-    ExtlibEnergyPtr
+    ExtlibWrapper
     stop();
 
     std::vector<TVPair>&
@@ -51,5 +51,5 @@ private:
     std::thread               measurement_thread;
     bool                      active;
     std::chrono::microseconds _interval;
-    ExtlibEnergyPtr           energy_domains;
+    ExtlibWrapper             extlib;
 };

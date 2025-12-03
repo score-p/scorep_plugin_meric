@@ -67,41 +67,6 @@ meric_plugin::requested_domain_names( std::string env_str )
 }
 
 
-std::unordered_map<std::string, domain_info>
-meric_plugin::query_available_counters( ExtlibEnergy* energy_domains )
-{
-    std::unordered_map<std::string, domain_info> domain_by_name;
-    // Try to read an energy timestamp, which contains information on the available
-    // counters for each domain.
-    ExtlibEnergyTimeStamp* ts = extlib_read_energy_measurements( energy_domains );
-    if ( ts == nullptr )
-    {
-        // Reading the timestamp failed: The plug-in is not usable.
-        throw std::runtime_error( "Could not read an energy timestamp with MERIC" );
-    }
-    // Store names of all available counters for all enabled domains
-    for ( unsigned int domain_idx = 0; domain_idx < EXTLIB_NUM_DOMAINS; ++domain_idx )
-    {
-        const auto& domain = ts->domain_data[ domain_idx ];
-        if ( EXTLIB_ENERGY_HAS_DOMAIN( *energy_domains, domain.domain_id ) )
-        {
-            std::unordered_map<std::string, unsigned int> counter_id_by_name;
-            for ( unsigned counter_idx = 0; counter_idx < domain.arr_size; ++counter_idx )
-            {
-                counter_id_by_name.emplace( domain.counter_name[ counter_idx ], counter_idx );
-            }
-            const auto& name = domain_name_by_id.at( domain.domain_id );
-            domain_by_name[ name ] = {
-                .id                 = domain.domain_id,
-                .idx                = domain_idx,
-                .counter_id_by_name = std::move( counter_id_by_name )
-            };
-        }
-    }
-    return domain_by_name;
-}
-
-
 meric_plugin::meric_plugin() :
     measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "INTERVAL_US", "50000" ) ) ) )
 {
@@ -109,8 +74,8 @@ meric_plugin::meric_plugin() :
 
     std::string               env_requested_domains = scorep::environment_variable::get( "DOMAINS", "ALL" );
     std::vector<unsigned int> requested_domains     = requested_domain_names( env_requested_domains );
-    this->energy_domains = init_meric_extlib( requested_domains );
-    this->domain_by_name = query_available_counters( this->energy_domains.get() );
+    this->extlib         = ExtlibWrapper( requested_domains );
+    this->domain_by_name = this->extlib.query_available_counters();
 
 
     // Debug output
@@ -173,14 +138,14 @@ meric_plugin::add_metric( energy_metric& metric )
 void
 meric_plugin::start()
 {
-    measurement.start( std::move( this->energy_domains ), get_handles() );
+    measurement.start( std::move( this->extlib ), get_handles() );
 }
 
 
 void
 meric_plugin::stop()
 {
-    this->energy_domains = measurement.stop();
+    this->extlib = measurement.stop();
 }
 
 
@@ -201,23 +166,9 @@ meric_plugin::get_all_values( energy_metric& metric, C& cursor )
 std::unordered_map<std::string, domain_info> meric_plugin::available_domains_and_counters()
 {
     std::vector<unsigned int> requested_domains = requested_domain_names( "ALL" );
-    ExtlibEnergyPtr           energy_domains    = init_meric_extlib( requested_domains );
-    const auto                domains           = query_available_counters( energy_domains.get() );
-    return domains;
+    return ExtlibWrapper( requested_domains ).query_available_counters();
 }
 
-
-
-std::ostream&
-operator<<( std::ostream& os, const domain_info& domain )
-{
-    os << " Counters for domain " << domain_name_by_id.at( domain.id ) << ": ";
-    for ( auto counter_it : domain.counter_id_by_name )
-    {
-        os << counter_it.first << ", ";
-    }
-    return os;
-}
 
 
 SCOREP_METRIC_PLUGIN_CLASS( meric_plugin, "meric" )
