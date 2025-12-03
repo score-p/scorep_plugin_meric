@@ -32,6 +32,7 @@ add_custom_target(run_plugin
           SCOREP_ENABLE_PROFILING=0
           SCOREP_ENABLE_TRACING=1
           SCOREP_EXPERIMENT_DIRECTORY=scorep-measurement
+          OMP_NUM_THREADS=2
           mpirun -n 2 ./adv.x
 )
 
