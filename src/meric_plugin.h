@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <iostream>
+#include <memory>
 
 
 struct domain_info
@@ -44,7 +45,6 @@ class meric_plugin : public scorep::plugin::base<meric_plugin,
 {
 public:
     meric_plugin();
-    ~meric_plugin();
 
     std::vector<scorep::plugin::metric_property>
     get_metric_properties( const std::string& metric_name );
@@ -67,8 +67,9 @@ public:
     available_domains_and_counters();
 
 private:
+
     meric_measurement measurement;
-    ExtlibEnergy      energy_domains;
+    ExtlibEnergyPtr   energy_domains;
 
     std::unordered_map<std::string, domain_info> domain_by_name;
 
@@ -76,12 +77,8 @@ private:
     static std::vector<unsigned int>
     requested_domain_names( std::string env_str );
 
-    static void
-    init_meric_extlib( const std::vector<unsigned int>& requested_domains,
-                       ExtlibEnergy*                    energy_domains );
-
-    static void
-    finalize_meric_extlib( ExtlibEnergy* energy_domains );
+    static ExtlibEnergyPtr
+    init_meric_extlib( const std::vector<unsigned int>& requested_domains );
 
     static std::unordered_map<std::string, domain_info>
     query_available_counters( ExtlibEnergy* energy_domains );

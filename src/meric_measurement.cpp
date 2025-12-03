@@ -16,7 +16,7 @@ meric_measurement::meric_measurement( std::chrono::microseconds interval ) : _in
 
 
 void
-meric_measurement::start( ExtlibEnergy* energy_domains, const std::vector<energy_metric>& handles )
+meric_measurement::start( ExtlibEnergyPtr energy_domains, const std::vector<energy_metric>& handles )
 {
     data.clear();
     for ( auto& handle : handles )
@@ -28,11 +28,11 @@ meric_measurement::start( ExtlibEnergy* energy_domains, const std::vector<energy
     measurement_thread = std::thread([ this ](){
         this->collect_readings();
     } );
-    this->energy_domains = energy_domains;
+    this->energy_domains = std::move( energy_domains );
 }
 
 
-void
+ExtlibEnergyPtr
 meric_measurement::stop()
 {
     active = false;
@@ -40,6 +40,7 @@ meric_measurement::stop()
     {
         measurement_thread.join();
     }
+    return std::move( this->energy_domains );
 }
 
 
@@ -56,11 +57,11 @@ meric_measurement::collect_readings()
     ExtlibEnergyTimeStamp* prev = nullptr;
     ExtlibEnergyTimeStamp* cur  = nullptr;
     ExtlibEnergyTimeStamp* res  = nullptr;
-    prev = extlib_read_energy_measurements( energy_domains );
+    prev = extlib_read_energy_measurements( energy_domains.get() );
     while ( active )
     {
         const auto timestamp = scorep::chrono::measurement_clock::now();
-        cur = extlib_read_energy_measurements( energy_domains );
+        cur = extlib_read_energy_measurements( energy_domains.get() );
         res = extlib_calc_energy_consumption( prev, cur );
         for ( auto& item : data )
         {

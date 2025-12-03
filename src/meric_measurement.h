@@ -17,6 +17,19 @@
 #include <thread>
 
 
+struct extlib_deleter
+{
+    void
+    operator()( ExtlibEnergy* energy_domains ) const
+    {
+        extlib_close( energy_domains );
+    }
+};
+
+using ExtlibEnergyPtr = std::unique_ptr<ExtlibEnergy, extlib_deleter>;
+
+
+
 class meric_measurement
 {
     using TVPair = std::pair<scorep::chrono::ticks, double>;
@@ -24,10 +37,10 @@ public:
     meric_measurement( std::chrono::microseconds interval );
 
     void
-    start( ExtlibEnergy*                     energy_domains,
+    start( ExtlibEnergyPtr                   energy_domains,
            const std::vector<energy_metric>& handles );
 
-    void
+    ExtlibEnergyPtr
     stop();
 
     std::vector<TVPair>&
@@ -51,5 +64,5 @@ private:
     std::thread               measurement_thread;
     bool                      active;
     std::chrono::microseconds _interval;
-    ExtlibEnergy*             energy_domains;
+    ExtlibEnergyPtr           energy_domains;
 };
