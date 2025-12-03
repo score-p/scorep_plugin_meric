@@ -38,13 +38,22 @@ const std::unordered_map<unsigned int, std::string> ExtlibWrapper::domain_name_b
     map_inverse<std::string, unsigned int>( ExtlibWrapper::domain_id_by_name );
 
 
+std::vector<std::string> ExtlibWrapper::all_domain_names()
+{
+    return map_keys( ExtlibWrapper::domain_id_by_name );
+}
+
+
+std::vector<unsigned int> ExtlibWrapper::all_domain_ids()
+{
+    return map_keys( ExtlibWrapper::domain_name_by_id );
+}
+
+
+
 // We only need space for one measurement at a time, but a little bit
 // extra does not hurt.
 static constexpr unsigned int extlib_reserve_for_total_measurements = 3;
-
-ExtlibWrapper::ExtlibWrapper()
-{
-}
 
 
 ExtlibWrapper::ExtlibWrapper( const std::vector<unsigned int>& requested_domains ) :

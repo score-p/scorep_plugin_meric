@@ -17,7 +17,7 @@ using scorep::plugin::logging;
 
 
 static std::string
-all_domain_names()
+comma_separated_domain_list()
 {
     std::stringstream ss;
     for ( auto item : ExtlibWrapper::domain_id_by_name )
@@ -29,13 +29,13 @@ all_domain_names()
 
 
 std::vector<unsigned int>
-meric_plugin::requested_domain_names( std::string env_str )
+meric_plugin::requested_domain_ids( std::string env_str )
 {
     // Parse the DOMAINS environment variable for the domains the user requests
     std::vector<unsigned int> requested_domains;
     if ( env_str == "" )
     {
-        logging::warn() << "No energy domains requested. Set " << scorep::environment_variable::name( "DOMAINS" ) << " to " << all_domain_names() << " or ALL";
+        logging::warn() << "No energy domains requested. Set " << scorep::environment_variable::name( "DOMAINS" ) << " to " << comma_separated_domain_list() << " or ALL";
         return {};
     }
     if ( env_str == "ALL" )
@@ -56,7 +56,7 @@ meric_plugin::requested_domain_names( std::string env_str )
         }
         else
         {
-            logging::warn() << "Unsupported domain name '" << name << "' in " << scorep::environment_variable::name( "DOMAINS" ) << " Set to " << all_domain_names() << " or ALL";
+            logging::warn() << "Unsupported domain name '" << name << "' in " << scorep::environment_variable::name( "DOMAINS" ) << " Set to " << comma_separated_domain_list() << " or ALL";
         }
     }
     return requested_domains;
@@ -69,7 +69,7 @@ meric_plugin::meric_plugin() :
     logging::debug() << "Measurement interval: " << measurement.interval().count() << " microseconds";
 
     std::string               env_requested_domains = scorep::environment_variable::get( "DOMAINS", "ALL" );
-    std::vector<unsigned int> requested_domains     = requested_domain_names( env_requested_domains );
+    std::vector<unsigned int> requested_domains     = requested_domain_ids( env_requested_domains );
     for ( auto id : requested_domains )
     {
         logging::debug() << "Requested " << id << " , " << ExtlibWrapper::domain_name_by_id.at( id );
@@ -160,13 +160,6 @@ meric_plugin::get_all_values( energy_metric& metric, C& cursor )
     {
         cursor.write( tvpair.first, tvpair.second );
     }
-}
-
-
-std::unordered_map<std::string, domain_info> meric_plugin::available_domains_and_counters()
-{
-    std::vector<unsigned int> requested_domains = requested_domain_names( "ALL" );
-    return ExtlibWrapper( requested_domains ).query_available_counters();
 }
 
 

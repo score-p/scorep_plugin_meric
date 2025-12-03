@@ -52,10 +52,17 @@ public:
     static const std::unordered_map<std::string, unsigned int> domain_id_by_name;
     static const std::unordered_map<unsigned int, std::string> domain_name_by_id;
 
+    static std::vector<unsigned int>
+    all_domain_ids();
+
+    static std::vector<std::string>
+    all_domain_names();
+
 public:
 
-    ExtlibWrapper();
+    ExtlibWrapper() = default;
     ExtlibWrapper( const std::vector<unsigned int>& requested_domains );
+
     std::unordered_map<std::string, domain_info>
     query_available_counters();
 

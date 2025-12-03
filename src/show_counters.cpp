@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
-#include "meric_plugin.h"
+#include "extlib_wrapper.h"
 
 #include <scorep/plugin/plugin.hpp>
 
@@ -16,7 +16,7 @@ main()
     // Silence warnings and info emitted by the plugin
     scorep::plugin::log::set_min_severity_level( nitro::log::severity_level::error );
 
-    const auto   domains     = meric_plugin::available_domains_and_counters();
+    const auto   domains     = ExtlibWrapper( ExtlibWrapper::all_domain_ids() ).query_available_counters();
     unsigned int num_domains = domains.size();
 
     if ( num_domains == 0 )

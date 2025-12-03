@@ -46,9 +46,6 @@ public:
     get_all_values( energy_metric& metric,
                     C&             cursor );
 
-    static std::unordered_map<std::string, domain_info>
-    available_domains_and_counters();
-
 private:
 
     meric_measurement measurement;
@@ -58,5 +55,5 @@ private:
 
 private:
     static std::vector<unsigned int>
-    requested_domain_names( std::string env_str );
+    requested_domain_ids( std::string env_str );
 };
