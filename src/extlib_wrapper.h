@@ -66,12 +66,14 @@ public:
     std::unordered_map<std::string, domain_info>
     query_available_counters();
 
-    ExtlibEnergyTimeStamp*
+    using TimeStamp = std::shared_ptr<ExtlibEnergyTimeStamp>;
+
+    TimeStamp
     read();
 
-    static ExtlibEnergyTimeStamp*
-    calc_energy_consumption( ExtlibEnergyTimeStamp* begin,
-                             ExtlibEnergyTimeStamp* end );
+    static TimeStamp
+    calc_energy_consumption( TimeStamp begin,
+                             TimeStamp end );
 
 
 private:

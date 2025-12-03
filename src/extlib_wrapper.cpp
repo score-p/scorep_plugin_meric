@@ -111,15 +111,17 @@ ExtlibWrapper::query_available_counters()
     return domain_by_name;
 }
 
-ExtlibEnergyTimeStamp*
+ExtlibWrapper::TimeStamp
 ExtlibWrapper::read()
 {
-    return extlib_read_energy_measurements( energy_domains.get() );
+    return TimeStamp( extlib_read_energy_measurements( energy_domains.get() ),
+                      /* deleter=*/ &extlib_free_energy_timestamp );
 }
 
 
-ExtlibEnergyTimeStamp*
-ExtlibWrapper::calc_energy_consumption( ExtlibEnergyTimeStamp* begin, ExtlibEnergyTimeStamp* end )
+ExtlibWrapper::TimeStamp
+ExtlibWrapper::calc_energy_consumption( TimeStamp begin, TimeStamp end )
 {
-    return extlib_calc_energy_consumption( begin, end );
+    return TimeStamp( extlib_calc_energy_consumption( begin.get(), end.get() ),
+                      /*deleter=*/ &extlib_free_energy_timestamp );
 }

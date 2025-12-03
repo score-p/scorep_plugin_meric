@@ -52,9 +52,7 @@ meric_measurement::readings( energy_metric& handle )
 void
 meric_measurement::collect_readings()
 {
-    ExtlibEnergyTimeStamp* prev = nullptr;
-    ExtlibEnergyTimeStamp* cur  = nullptr;
-    ExtlibEnergyTimeStamp* res  = nullptr;
+    ExtlibWrapper::TimeStamp prev, cur, res;
     prev = this->extlib.read();
     while ( active )
     {
@@ -65,13 +63,9 @@ meric_measurement::collect_readings()
         {
             const auto& metric   = item.first.get();
             auto&       sequence = item.second;
-            sequence.emplace_back( timestamp, metric.read( res ) );
+            sequence.emplace_back( timestamp, metric.read( res.get() ) );
         }
-        extlib_free_energy_timestamp( prev );
         prev = cur;
-        cur  = nullptr;
-        extlib_free_energy_timestamp( res );
-        res = nullptr;
         std::this_thread::sleep_for( _interval );
     }
 }

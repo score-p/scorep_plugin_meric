@@ -25,12 +25,14 @@ struct energy_metric
                    std::string  counter_name );
 
     energy_metric( const energy_metric& ) = delete;
+
     /* copy-assign */
     energy_metric&
     operator=( const energy_metric& ) = delete;
 
     /* move constructor */
     energy_metric( energy_metric&& ) = default;
+
     /* move assignment */
     energy_metric&
     operator=( energy_metric&& ) = default;
@@ -40,11 +42,13 @@ struct energy_metric
 
     size_t
     id() const;
+
     std::string
     name() const;
 
     double
-                 read( const ExtlibEnergyTimeStamp* ts ) const;
+    read( const ExtlibEnergyTimeStamp* ts ) const;
+
 
     unsigned int domain_idx;  // Index in ExtlibEnergyTimeStamp.domain_data array
     unsigned int domain_id;   // Domain Id, i.e. value in the ExtlibEnergy::Domains enum
