@@ -24,7 +24,7 @@ static std::string
 all_domain_names()
 {
     std::stringstream ss;
-    for ( auto item : domain_id_by_name )
+    for ( auto item : ExtlibWrapper::domain_id_by_name )
     {
         ss << item.first << ", ";
     }
@@ -44,7 +44,7 @@ meric_plugin::requested_domain_names( std::string env_str )
     }
     if ( env_str == "ALL" )
     {
-        for ( auto item : domain_id_by_name )
+        for ( auto item : ExtlibWrapper::domain_id_by_name )
         {
             requested_domains.emplace_back( item.second );
         }
@@ -53,8 +53,8 @@ meric_plugin::requested_domain_names( std::string env_str )
     // expecting a comma-separated list of energy domains
     for ( std::string name : split_string( env_str, ',' ) )
     {
-        const auto it = domain_id_by_name.find( name );
-        if ( it != domain_id_by_name.end() )
+        const auto it = ExtlibWrapper::domain_id_by_name.find( name );
+        if ( it != ExtlibWrapper::domain_id_by_name.end() )
         {
             requested_domains.emplace_back( it->second );
         }
@@ -74,6 +74,10 @@ meric_plugin::meric_plugin() :
 
     std::string               env_requested_domains = scorep::environment_variable::get( "DOMAINS", "ALL" );
     std::vector<unsigned int> requested_domains     = requested_domain_names( env_requested_domains );
+    for ( auto id : requested_domains )
+    {
+        logging::debug() << "Requested " << id << " , " << ExtlibWrapper::domain_name_by_id.at( id );
+    }
     this->extlib         = ExtlibWrapper( requested_domains );
     this->domain_by_name = this->extlib.query_available_counters();
 

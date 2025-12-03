@@ -15,13 +15,27 @@ using scorep::plugin::logging;
 std::ostream&
 operator<<( std::ostream& os, const domain_info& domain )
 {
-    os << " Counters for domain " << domain_name_by_id.at( domain.id ) << ": ";
+    os << " Counters for domain " << ExtlibWrapper::domain_name_by_id.at( domain.id ) << ": ";
     for ( auto counter_it : domain.counter_id_by_name )
     {
         os << counter_it.first << ", ";
     }
     return os;
 }
+
+
+const std::unordered_map<std::string, unsigned int> ExtlibWrapper::domain_id_by_name = {
+    { "A64FX", ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_A64FX },
+    { "RAPL",  ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_RAPL  },
+    { "NVML",  ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_NVML  },
+    { "ROCM",  ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_ROCM  },
+    { "HDEEM", ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_HDEEM },
+    { "HWMON", ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_HWMON }
+};
+
+
+const std::unordered_map<unsigned int, std::string> ExtlibWrapper::domain_name_by_id =
+    map_inverse<std::string, unsigned int>( ExtlibWrapper::domain_id_by_name );
 
 
 // We only need space for one measurement at a time, but a little bit
@@ -48,7 +62,7 @@ ExtlibWrapper::ExtlibWrapper( const std::vector<unsigned int>& requested_domains
     {
         if ( not EXTLIB_ENERGY_HAS_DOMAIN( *energy_domains, domain ) )
         {
-            logging::warn() << "Domain '" << domain_name_by_id.at( domain ) << "' was requested but could not be enabled";
+            logging::warn() << "Domain '" << ExtlibWrapper::domain_name_by_id.at( domain ) << "' was requested but could not be enabled";
         }
     }
 }
@@ -77,7 +91,7 @@ ExtlibWrapper::query_available_counters()
             {
                 counter_id_by_name.emplace( domain.counter_name[ counter_idx ], counter_idx );
             }
-            const auto& name = domain_name_by_id.at( domain.domain_id );
+            const auto& name = ExtlibWrapper::domain_name_by_id.at( domain.domain_id );
             domain_by_name[ name ] = {
                 .id                 = domain.domain_id,
                 .idx                = domain_idx,
