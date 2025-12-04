@@ -5,7 +5,7 @@
  *
  */
 
-#include "extlib_wrapper.h"
+#include "ExtlibWrapper.h"
 
 #include <scorep/plugin/plugin.hpp>
 
@@ -67,10 +67,10 @@ ExtlibWrapper::ExtlibWrapper( const std::vector<unsigned int>& requested_domains
 }
 
 
-std::unordered_map<std::string, domain_info>
-ExtlibWrapper::query_available_counters()
+std::unordered_map<std::string, ExtlibWrapper::Domain>
+ExtlibWrapper::query_enabled_domains()
 {
-    std::unordered_map<std::string, domain_info> domain_by_name;
+    std::unordered_map<std::string, Domain> domain_by_name;
     // Try to read an energy timestamp, which contains information on the available
     // counters for each domain.
     ExtlibEnergyTimeStamp* ts = extlib_read_energy_measurements( energy_domains.get() );
@@ -85,21 +85,22 @@ ExtlibWrapper::query_available_counters()
         const auto& domain = ts->domain_data[ domain_idx ];
         if ( EXTLIB_ENERGY_HAS_DOMAIN( *energy_domains, domain.domain_id ) )
         {
-            std::unordered_map<std::string, unsigned int> counter_id_by_name;
+            std::unordered_map<std::string, unsigned int> counter_idx_by_name;
             for ( unsigned counter_idx = 0; counter_idx < domain.arr_size; ++counter_idx )
             {
-                counter_id_by_name.emplace( domain.counter_name[ counter_idx ], counter_idx );
+                counter_idx_by_name.emplace( domain.counter_name[ counter_idx ], counter_idx );
             }
             const auto& name = ExtlibWrapper::domain_name_by_id.at( domain.domain_id );
             domain_by_name[ name ] = {
-                .id                 = domain.domain_id,
-                .idx                = domain_idx,
-                .counter_id_by_name = std::move( counter_id_by_name )
+                .id                  = domain.domain_id,
+                .idx                 = domain_idx,
+                .counter_idx_by_name = std::move( counter_idx_by_name )
             };
         }
     }
     return domain_by_name;
 }
+
 
 ExtlibWrapper::TimeStamp
 ExtlibWrapper::read()

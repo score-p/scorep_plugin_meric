@@ -32,14 +32,14 @@ add_subdirectory(scorep_plugin_cxx_wrapper)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(MERIC_PLUGIN_SRC
-    src/energy_metric.cpp
-    src/energy_metric.h
-    src/extlib_wrapper.cpp
-    src/extlib_wrapper.h
-    src/meric_measurement.cpp
-    src/meric_measurement.h
+    src/ExtlibWrapper.cpp
+    src/ExtlibWrapper.h
+    src/MeasurementThread.cpp
+    src/MeasurementThread.h
     src/meric_plugin.cpp
     src/meric_plugin.h
+    src/Metric.cpp
+    src/Metric.h
     src/utils.cpp
     src/utils.h
     )

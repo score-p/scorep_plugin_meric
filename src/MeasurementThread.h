@@ -7,8 +7,8 @@
  */
 #pragma once
 
-#include "energy_metric.h"
-#include "extlib_wrapper.h"
+#include "Metric.h"
+#include "ExtlibWrapper.h"
 
 #include <chrono>
 #include <thread>
@@ -17,21 +17,21 @@
 
 namespace MericPlugin
 {
-class meric_measurement
+class MeasurementThread
 {
     using TVPair = std::pair<scorep::chrono::ticks, double>;
 public:
-    meric_measurement( std::chrono::microseconds interval );
+    MeasurementThread( std::chrono::microseconds interval );
 
     void
-    start( ExtlibWrapper                     extlib,
-           const std::vector<energy_metric>& handles );
+    start( ExtlibWrapper              extlib,
+           const std::vector<Metric>& handles );
 
     ExtlibWrapper
     stop();
 
     std::vector<TVPair>&
-    readings( energy_metric& handle );
+    readings( Metric& handle );
 
     inline const std::chrono::microseconds
     interval() const
@@ -43,10 +43,10 @@ private:
     void
     collect_readings();
 
-    std::unordered_map<std::reference_wrapper<energy_metric>,
+    std::unordered_map<std::reference_wrapper<Metric>,
                        std::vector<TVPair>,
-                       std::hash<energy_metric>,
-                       std::equal_to<energy_metric> > data;
+                       std::hash<Metric>,
+                       std::equal_to<Metric> > data;
 
     std::thread               measurement_thread;
     bool                      active;

@@ -5,22 +5,22 @@
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
-#include "meric_measurement.h"
+#include "MeasurementThread.h"
 
 namespace MericPlugin
 {
-meric_measurement::meric_measurement( std::chrono::microseconds interval ) : _interval( interval )
+MeasurementThread::MeasurementThread( std::chrono::microseconds interval ) : _interval( interval )
 {
 }
 
 
 void
-meric_measurement::start( ExtlibWrapper extlib, const std::vector<energy_metric>& handles )
+MeasurementThread::start( ExtlibWrapper extlib, const std::vector<Metric>& handles )
 {
     data.clear();
     for ( auto& handle : handles )
     {
-        data.insert( std::make_pair( std::ref( const_cast<energy_metric&>( handle ) ),
+        data.insert( std::make_pair( std::ref( const_cast<Metric&>( handle ) ),
                                      std::vector<TVPair>() ) );
     }
     active             = true;
@@ -32,7 +32,7 @@ meric_measurement::start( ExtlibWrapper extlib, const std::vector<energy_metric>
 
 
 ExtlibWrapper
-meric_measurement::stop()
+MeasurementThread::stop()
 {
     active = false;
     if ( measurement_thread.joinable() )
@@ -43,15 +43,15 @@ meric_measurement::stop()
 }
 
 
-std::vector<meric_measurement::TVPair>&
-meric_measurement::readings( energy_metric& handle )
+std::vector<MeasurementThread::TVPair>&
+MeasurementThread::readings( Metric& handle )
 {
     return data[ handle ];
 }
 
 
 void
-meric_measurement::collect_readings()
+MeasurementThread::collect_readings()
 {
     ExtlibWrapper::TimeStamp prev, cur, res;
     prev = this->extlib.read();

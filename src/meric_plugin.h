@@ -7,8 +7,8 @@
  */
 #pragma once
 
-#include "meric_measurement.h"
-#include "extlib_wrapper.h"
+#include "MeasurementThread.h"
+#include "ExtlibWrapper.h"
 
 #include <scorep/plugin/plugin.hpp>
 
@@ -17,7 +17,7 @@
 namespace MericPlugin
 {
 template <typename P, typename Policies>
-using meric_object_id = scorep::plugin::policy::object_id<energy_metric, P, Policies>;
+using meric_object_id = scorep::plugin::policy::object_id<Metric, P, Policies>;
 
 
 class meric_plugin : public scorep::plugin::base<meric_plugin,
@@ -34,7 +34,7 @@ public:
     get_metric_properties( const std::string& metric_name );
 
     void
-    add_metric( energy_metric& metric );
+    add_metric( Metric& metric );
 
     void
     start();
@@ -44,15 +44,15 @@ public:
 
     template <typename C>
     void
-    get_all_values( energy_metric& metric,
-                    C&             cursor );
+    get_all_values( Metric& metric,
+                    C&      cursor );
 
 private:
 
-    meric_measurement measurement;
+    MeasurementThread measurement;
     ExtlibWrapper     extlib;
 
-    std::unordered_map<std::string, domain_info> domain_by_name;
+    std::unordered_map<std::string, ExtlibWrapper::Domain> domain_by_name;
 
 private:
     static std::vector<unsigned int>

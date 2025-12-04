@@ -33,7 +33,7 @@ std::vector<unsigned int>
 meric_plugin::requested_domain_ids( std::string env_str )
 {
     // Parse the DOMAINS environment variable for the domains the user requests
-    std::vector<unsigned int> requested_domains;
+    std::vector<unsigned int> requested_ids;
     if ( env_str == "" )
     {
         logging::warn() << "No energy domains requested. Set " << scorep::environment_variable::name( "DOMAINS" ) << " to " << comma_separated_domain_list() << " or ALL";
@@ -43,9 +43,9 @@ meric_plugin::requested_domain_ids( std::string env_str )
     {
         for ( auto item : ExtlibWrapper::domain_id_by_name )
         {
-            requested_domains.emplace_back( item.second );
+            requested_ids.emplace_back( item.second );
         }
-        return requested_domains;
+        return requested_ids;
     }
     // expecting a comma-separated list of energy domains
     for ( std::string name : split_string( env_str, ',' ) )
@@ -53,14 +53,14 @@ meric_plugin::requested_domain_ids( std::string env_str )
         const auto it = ExtlibWrapper::domain_id_by_name.find( name );
         if ( it != ExtlibWrapper::domain_id_by_name.end() )
         {
-            requested_domains.emplace_back( it->second );
+            requested_ids.emplace_back( it->second );
         }
         else
         {
             logging::warn() << "Unsupported domain name '" << name << "' in " << scorep::environment_variable::name( "DOMAINS" ) << " Set to " << comma_separated_domain_list() << " or ALL";
         }
     }
-    return requested_domains;
+    return requested_ids;
 }
 
 
@@ -76,7 +76,7 @@ meric_plugin::meric_plugin() :
         logging::debug() << "Requested " << id << " , " << ExtlibWrapper::domain_name_by_id.at( id );
     }
     this->extlib         = ExtlibWrapper( requested_domains );
-    this->domain_by_name = this->extlib.query_available_counters();
+    this->domain_by_name = this->extlib.query_enabled_domains();
 
 
     // Debug output
@@ -84,7 +84,7 @@ meric_plugin::meric_plugin() :
     for ( auto domain_it : domain_by_name )
     {
         logging::debug() << domain_it.second;
-        num_available_counters += domain_it.second.counter_id_by_name.size();
+        num_available_counters += domain_it.second.counter_idx_by_name.size();
     }
     if ( num_available_counters == 0 )
     {
@@ -106,20 +106,21 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
     }
     const std::string& domain_name  = domain_and_counter[ 0 ];
     const std::string& counter_name = domain_and_counter[ 1 ];
-    const auto         domain       = this->domain_by_name.find( domain_name );
-    if ( domain == this->domain_by_name.end() )
+    const auto         domain_it    = this->domain_by_name.find( domain_name );
+    if ( domain_it == this->domain_by_name.end() )
     {
         logging::warn() << "Domain '" << domain_name << "' is not enabled";
         return {};
     }
-    const auto counter = domain->second.counter_id_by_name.find( counter_name );
-    if ( counter == domain->second.counter_id_by_name.end() )
+    const ExtlibWrapper::Domain& domain     = domain_it->second;
+    const auto                   counter_it = domain.counter_idx_by_name.find( counter_name );
+    if ( counter_it == domain.counter_idx_by_name.end() )
     {
         logging::warn() << "Counter '" << counter_name << "' is not available for domain '" << domain_name << "'";
         return {};
     }
 
-    make_handle( metric_name, domain->second.idx, domain->second.id, domain_name, counter->second, counter_name );
+    make_handle( metric_name, domain.idx, domain.id, domain_name, counter_it->second, counter_name );
 
     // Must use the same name here as for the handle you made earlier.
     return { scorep::plugin::metric_property(
@@ -131,7 +132,7 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
 
 
 void
-meric_plugin::add_metric( energy_metric& metric )
+meric_plugin::add_metric( Metric& metric )
 {
     logging::info() << "add metric called with: " << metric.name();
 }
@@ -153,7 +154,7 @@ meric_plugin::stop()
 
 template <typename C>
 void
-meric_plugin::get_all_values( energy_metric& metric, C& cursor )
+meric_plugin::get_all_values( Metric& metric, C& cursor )
 {
     logging::info() << "get_all_values called with: " << metric.name();
 
