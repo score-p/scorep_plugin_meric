@@ -14,16 +14,29 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 namespace MericPlugin
 {
 struct Metric
 {
-    Metric( unsigned int domain_idx,
+    using Total       = std::integral_constant<unsigned, 0>;
+    using DomainTotal = std::integral_constant<unsigned, 1>;
+    using Single      = std::integral_constant<unsigned, 2>;
+
+    Metric( Single,
+            unsigned int domain_idx,
             unsigned int domain_id,
             std::string  domain_name,
             unsigned int counter_idx,
             std::string  counter_name );
+
+    Metric ( DomainTotal,
+             unsigned int domain_idx,
+             unsigned int domain_id,
+             std::string  domain_name );
+
+    Metric ( Total );
 
     Metric( const Metric& ) = delete;
 
@@ -53,7 +66,23 @@ struct Metric
     double
     read( const ExtlibEnergyTimeStamp* ts ) const;
 
+    bool
+    isSingle() const
+    {
+        return type == Single::value;
+    };
+    bool
+    isDomainTotal() const
+    {
+        return type == DomainTotal::value;
+    };
+    bool
+    isTotal() const
+    {
+        return type == Total::value;
+    };
 
+    unsigned int type;
     unsigned int domain_idx;  // Index in ExtlibEnergyTimeStamp.domain_data array
     unsigned int domain_id;   // Domain Id, i.e. value in the ExtlibEnergy::Domains enum
     std::string  domain_name;

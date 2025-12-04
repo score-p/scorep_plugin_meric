@@ -103,35 +103,54 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
     }
     const std::string& domain_name  = domain_and_counter[ 0 ];
     const std::string& counter_name = domain_and_counter[ 1 ];
-    const auto         domain_it    = this->domain_by_name.find( domain_name );
+
+    std::vector<scorep::plugin::metric_property> metric_properties;
+
+    auto add_property = [ &metric_properties ]( const Metric& metric ){
+                            metric_properties.push_back( scorep::plugin::metric_property(
+                                                             metric.name(),
+                                                             metric.description(),
+                                                             "J"
+                                                             ).absolute_point().value_double().decimal() );
+                        };
+
+    if ( domain_name == "TOTAL" )
+    {
+        // counter_name is ignored
+        add_property( make_handle( metric_name, Metric::Total() ) );
+        return metric_properties;
+    }
+
+    const auto domain_it = this->domain_by_name.find( domain_name );
     if ( domain_it == this->domain_by_name.end() )
     {
         logging::warn() << "Domain '" << domain_name << "' is not enabled";
-        return {};
+        return metric_properties;
     }
-    const ExtlibWrapper::Domain& domain     = domain_it->second;
-    const auto                   counter_it = domain.counter_idx_by_name.find( counter_name );
+
+    const ExtlibWrapper::Domain& domain = domain_it->second;
+    if ( counter_name == "TOTAL" )
+    {
+        add_property( make_handle( metric_name, Metric::DomainTotal(), domain.idx, domain.id, domain_name ) );
+        return metric_properties;
+    }
+
+    const auto counter_it = domain.counter_idx_by_name.find( counter_name );
     if ( counter_it == domain.counter_idx_by_name.end() )
     {
         logging::warn() << "Counter '" << counter_name << "' is not available for domain '" << domain_name << "'";
-        return {};
+        return metric_properties;
     }
 
-    const Metric& metric = make_handle( metric_name, domain.idx, domain.id, domain_name, counter_it->second, counter_name );
-
-    // Must use the same name here as for the handle you made earlier.
-    return { scorep::plugin::metric_property(
-                 metric_name,
-                 metric.description(),
-                 "J"
-                 ).absolute_point().value_double().decimal() };
+    add_property( make_handle( metric_name, Metric::Single(), domain.idx, domain.id, domain_name, counter_it->second, counter_name ) );
+    return metric_properties;
 }
 
 
 void
 meric_plugin::add_metric( Metric& metric )
 {
-    logging::info() << "Added metric " << metric.name();
+    logging::info() << "Added metric " << metric.name() << " ( id " << metric.id() << " )";
 }
 
 
