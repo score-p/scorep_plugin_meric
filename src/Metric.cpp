@@ -37,6 +37,13 @@ Metric::name() const
     return this->domain_name + ":" + this->counter_name;
 }
 
+std::string
+Metric::description() const
+{
+    std::stringstream ss;
+    ss << "Counter '" << this->counter_name << "' in Meric energy domain '" << this->domain_name << "'";
+    return ss.str();
+}
 
 bool
 Metric::operator==( const Metric& other ) const

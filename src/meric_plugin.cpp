@@ -120,12 +120,12 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
         return {};
     }
 
-    make_handle( metric_name, domain.idx, domain.id, domain_name, counter_it->second, counter_name );
+    const Metric& metric = make_handle( metric_name, domain.idx, domain.id, domain_name, counter_it->second, counter_name );
 
     // Must use the same name here as for the handle you made earlier.
     return { scorep::plugin::metric_property(
                  metric_name,
-                 "Meric energy counter",
+                 metric.description(),
                  "J"
                  ).absolute_point().value_double().decimal() };
 }

@@ -47,6 +47,9 @@ struct Metric
     std::string
     name() const;
 
+    std::string
+    description() const;
+
     double
     read( const ExtlibEnergyTimeStamp* ts ) const;
 
