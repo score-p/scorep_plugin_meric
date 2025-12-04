@@ -16,8 +16,8 @@
 #include <unordered_map>
 #include <vector>
 
-
-
+namespace MericPlugin
+{
 struct domain_info
 {
     unsigned int                                  id;  // The value in the Domains enum
@@ -25,13 +25,6 @@ struct domain_info
 
     std::unordered_map<std::string, unsigned int> counter_id_by_name;
 };
-
-
-std::ostream&
-operator<<( std::ostream&      os,
-            const domain_info& domain );
-
-
 
 
 class ExtlibWrapper
@@ -79,3 +72,19 @@ private:
 
     ExtlibEnergyPtr energy_domains;
 };
+}
+
+
+namespace std
+{
+inline ostream&
+operator<<( ostream& os, const MericPlugin::domain_info& domain )
+{
+    os << " Counters for domain " << MericPlugin::ExtlibWrapper::domain_name_by_id.at( domain.id ) << ": ";
+    for ( auto counter_it : domain.counter_id_by_name )
+    {
+        os << counter_it.first << ", ";
+    }
+    return os;
+}
+}

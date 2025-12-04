@@ -15,7 +15,8 @@
 
 using scorep::plugin::logging;
 
-
+namespace MericPlugin
+{
 static std::string
 comma_separated_domain_list()
 {
@@ -162,7 +163,8 @@ meric_plugin::get_all_values( energy_metric& metric, C& cursor )
         cursor.write( tvpair.first, tvpair.second );
     }
 }
+}
 
-
+using namespace MericPlugin;
 
 SCOREP_METRIC_PLUGIN_CLASS( meric_plugin, "meric" )

@@ -11,7 +11,8 @@
 #include <vector>
 #include <string>
 
-
+namespace MericPlugin
+{
 std::vector<std::string>
 split_string( const std::string& str,
               char               delim = ' ' );
@@ -46,4 +47,5 @@ map_keys( const std::unordered_map<K, V>& map )
         keys.emplace_back( item.first );
     }
     return keys;
+}
 }

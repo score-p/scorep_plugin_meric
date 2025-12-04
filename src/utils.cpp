@@ -8,7 +8,8 @@
 #include <string>
 #include <vector>
 
-
+namespace MericPlugin
+{
 std::vector<std::string>
 split_string( const std::string& str, char delim )
 {
@@ -39,4 +40,5 @@ split_string( const std::string& str, char delim )
         prev = pos + 1;
     }
     return split;
+}
 }

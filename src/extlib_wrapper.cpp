@@ -12,18 +12,8 @@
 
 using scorep::plugin::logging;
 
-std::ostream&
-operator<<( std::ostream& os, const domain_info& domain )
+namespace MericPlugin
 {
-    os << " Counters for domain " << ExtlibWrapper::domain_name_by_id.at( domain.id ) << ": ";
-    for ( auto counter_it : domain.counter_id_by_name )
-    {
-        os << counter_it.first << ", ";
-    }
-    return os;
-}
-
-
 const std::unordered_map<std::string, unsigned int> ExtlibWrapper::domain_id_by_name = {
     { "A64FX", ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_A64FX },
     { "RAPL",  ExtlibEnergy::Domains::EXTLIB_ENERGY_DOMAIN_RAPL  },
@@ -124,4 +114,5 @@ ExtlibWrapper::calc_energy_consumption( TimeStamp begin, TimeStamp end )
 {
     return TimeStamp( extlib_calc_energy_consumption( begin.get(), end.get() ),
                       /*deleter=*/ &extlib_free_energy_timestamp );
+}
 }

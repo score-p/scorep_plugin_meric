@@ -15,7 +15,8 @@
 #include <unordered_map>
 #include <vector>
 
-
+namespace MericPlugin
+{
 class meric_measurement
 {
     using TVPair = std::pair<scorep::chrono::ticks, double>;
@@ -52,3 +53,4 @@ private:
     std::chrono::microseconds _interval;
     ExtlibWrapper             extlib;
 };
+}

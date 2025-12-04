@@ -12,7 +12,8 @@
 #include <chrono>
 #include <string>
 
-
+namespace MericPlugin
+{
 energy_metric::energy_metric( unsigned int domain_idx, unsigned int domain_id, std::string domain_name, unsigned int counter_idx, std::string counter_name ) :
     domain_idx( domain_idx ),
     domain_id( domain_id ),
@@ -48,4 +49,5 @@ double
 energy_metric::read( const ExtlibEnergyTimeStamp* ts ) const
 {
     return ts->domain_data[ this->domain_idx ].energy_per_counter[ this->counter_idx ];
+}
 }

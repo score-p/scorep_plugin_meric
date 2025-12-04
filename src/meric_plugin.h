@@ -14,7 +14,8 @@
 
 #include <vector>
 
-
+namespace MericPlugin
+{
 template <typename P, typename Policies>
 using meric_object_id = scorep::plugin::policy::object_id<energy_metric, P, Policies>;
 
@@ -57,3 +58,4 @@ private:
     static std::vector<unsigned int>
     requested_domain_ids( std::string env_str );
 };
+}

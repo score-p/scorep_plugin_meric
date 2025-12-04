@@ -15,7 +15,8 @@
 #include <string>
 #include <vector>
 
-
+namespace MericPlugin
+{
 struct energy_metric
 {
     energy_metric( unsigned int domain_idx,
@@ -56,12 +57,13 @@ struct energy_metric
     unsigned int counter_idx; // Index in ExtlibEnergyTimeStamp.domain_data[domain_idx].energy_per_counter array
     std::string  counter_name;
 };
+}
 
 
 namespace std
 {
 inline ostream&
-operator<<( ostream& s, const energy_metric& metric )
+operator<<( ostream& s, const MericPlugin::energy_metric& metric )
 {
     s << "(" << metric.domain_name << ":" << metric.counter_name << ")";
     return s;
@@ -69,12 +71,12 @@ operator<<( ostream& s, const energy_metric& metric )
 
 
 template <>
-struct hash<energy_metric>
+struct hash<MericPlugin::energy_metric>
 {
     size_t inline
-    operator()( const energy_metric& metric ) const
+    operator()( const MericPlugin::energy_metric& metric ) const
     {
         return metric.id();
     }
 };
-};
+}

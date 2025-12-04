@@ -7,7 +7,8 @@
  */
 #include "meric_measurement.h"
 
-
+namespace MericPlugin
+{
 meric_measurement::meric_measurement( std::chrono::microseconds interval ) : _interval( interval )
 {
 }
@@ -24,8 +25,8 @@ meric_measurement::start( ExtlibWrapper extlib, const std::vector<energy_metric>
     }
     active             = true;
     measurement_thread = std::thread([ this ](){
-        this->collect_readings();
-    } );
+            this->collect_readings();
+        } );
     this->extlib = std::move( extlib );
 }
 
@@ -68,4 +69,5 @@ meric_measurement::collect_readings()
         prev = cur;
         std::this_thread::sleep_for( _interval );
     }
+}
 }

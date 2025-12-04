@@ -10,6 +10,8 @@
 
 #include <iostream>
 
+using namespace MericPlugin;
+
 int
 main()
 {
