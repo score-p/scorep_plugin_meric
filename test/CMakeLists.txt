@@ -26,7 +26,7 @@ add_custom_target(run_plugin
   COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:meric_plugin>:$ENV{LD_LIBRARY_PATH}
           SCOREP_METRIC_PLUGINS=meric_plugin
           SCOREP_METRIC_MERIC_PLUGIN_VERBOSE=DEBUG
-          SCOREP_METRIC_MERIC_PLUGIN=RAPL:package_0
+          SCOREP_METRIC_MERIC_PLUGIN=RAPL:PCKG_0,
           SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_US=20000
           SCOREP_METRIC_MERIC_PLUGIN_DOMAINS=RAPL,
           SCOREP_ENABLE_PROFILING=0
@@ -36,10 +36,21 @@ add_custom_target(run_plugin
           mpirun -n 2 ./adv.x
 )
 
-add_executable(meric_example_basic
-  meric_example_basic.cpp
+# Basic example extracted from the meric exlib readme
+add_executable(meric_example
+  meric_example.cpp
 )
-target_link_libraries(meric_example_basic
+target_link_libraries(meric_example
+  PUBLIC
+  Meric::libmeric_ext
+)
+
+# Same sources as above, but enable the reserved memory mode
+add_executable(meric_example_reserved_mem
+  meric_example.cpp
+)
+target_compile_definitions(meric_example PUBLIC RESERVED_MEM)
+target_link_libraries(meric_example_reserved_mem
   PUBLIC
   Meric::libmeric_ext
 )

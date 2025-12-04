@@ -30,9 +30,31 @@ void do_work(int nx, int ny)
     }
 }
 
+
+void enableAllEnergyDomains(ExtlibEnergy& energy_domains)
+{
+    EXTLIB_ENERGY_ENABLE_DOMAIN(energy_domains, ExtlibEnergy::EXTLIB_ENERGY_DOMAIN_A64FX);
+    EXTLIB_ENERGY_ENABLE_DOMAIN(energy_domains, ExtlibEnergy::EXTLIB_ENERGY_DOMAIN_RAPL);
+    EXTLIB_ENERGY_ENABLE_DOMAIN(energy_domains, ExtlibEnergy::EXTLIB_ENERGY_DOMAIN_NVML);
+    EXTLIB_ENERGY_ENABLE_DOMAIN(energy_domains, ExtlibEnergy::EXTLIB_ENERGY_DOMAIN_ROCM);
+    EXTLIB_ENERGY_ENABLE_DOMAIN(energy_domains, ExtlibEnergy::EXTLIB_ENERGY_DOMAIN_HDEEM);
+    EXTLIB_ENERGY_ENABLE_DOMAIN(energy_domains, ExtlibEnergy::EXTLIB_ENERGY_DOMAIN_HWMON);
+}
+
+
 int main() {
     ExtlibEnergy energy_domains = {0};
-    EXTLIB_ENERGY_ENABLE_ALL_DOMAINS(energy_domains);
+    enableAllEnergyDomains(energy_domains);
+
+    // Enable reserved memory for 10 measurements (automatically allocates 20 slots)
+    // This is the page size, when more read is done, new pages are created with 20
+    // slots and deallocated automatically. All allocations now use pre-allocated
+    // memory pools. Usage of the library stays the same: In particular, you still
+    // have to call extlib_free_energy_timestamp to clean up time stamps. Internally,
+    // this returns memory to the pool instead of freeing it.
+#if defined(RESERVED_MEM)
+    EXTLIB_ENERGY_USE_RESERVED_MEMORY(energy_domains, 10);
+#endif /* defined(RESERVED_MEM) */
 
     extlib_init(&energy_domains, true);
 
