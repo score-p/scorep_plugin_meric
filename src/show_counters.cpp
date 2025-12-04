@@ -24,19 +24,28 @@ main()
     if ( num_domains == 0 )
     {
         std::cout << "No domains could be enabled" << std::endl;
-        return 0;
+        return 1;
     }
 
     unsigned int num_counters = 0;
+    std::cout << "Available domains : ";
     for ( const auto& it : domains )
     {
-        num_counters += it.second.counter_idx_by_name.size();
-        std::cout << it.second << "\n";
+        std::cout << it.first << ", ";
+    }
+    std::cout << std::endl;
+
+    for ( const auto& it : domains )
+    {
+        const size_t n = it.second.counter_idx_by_name.size();
+        num_counters += n;
+        std::cout << it.first << " counters available: " << it.second.counter_names() << std::endl;
     }
 
     if ( num_counters == 0 )
     {
         std::cout << "No counters are available" << std::endl;
+        return 1;
     }
 
     return 0;

@@ -67,14 +67,10 @@ meric_plugin::requested_domain_ids( std::string env_str )
 meric_plugin::meric_plugin() :
     measurement( std::chrono::microseconds( stoi( scorep::environment_variable::get( "INTERVAL_US", "50000" ) ) ) )
 {
-    logging::debug() << "Measurement interval: " << measurement.interval().count() << " microseconds";
+    logging::info() << "Measurement interval: " << measurement.interval().count() << " microseconds";
 
     std::string               env_requested_domains = scorep::environment_variable::get( "DOMAINS", "ALL" );
     std::vector<unsigned int> requested_domains     = requested_domain_ids( env_requested_domains );
-    for ( auto id : requested_domains )
-    {
-        logging::debug() << "Requested " << id << " , " << ExtlibWrapper::domain_name_by_id.at( id );
-    }
     this->extlib         = ExtlibWrapper( requested_domains );
     this->domain_by_name = this->extlib.query_enabled_domains();
 
@@ -83,7 +79,8 @@ meric_plugin::meric_plugin() :
     unsigned int num_available_counters = 0;
     for ( auto domain_it : domain_by_name )
     {
-        logging::debug() << domain_it.second;
+        logging::info() << "Enabled domain " <<          domain_it.second.name();
+        logging::debug() << "Available counters for " << domain_it.second.name() << ": " << domain_it.second.counter_names();
         num_available_counters += domain_it.second.counter_idx_by_name.size();
     }
     if ( num_available_counters == 0 )
@@ -96,7 +93,7 @@ meric_plugin::meric_plugin() :
 std::vector<scorep::plugin::metric_property>
 meric_plugin::get_metric_properties( const std::string& metric_name )
 {
-    logging::debug() << "get metric properties called with: " << metric_name;
+    logging::debug() << "Requested metric " << metric_name;
 
     std::vector<std::string> domain_and_counter = split_string( metric_name, ':' );
     if ( domain_and_counter.size() != 2 )
@@ -134,7 +131,7 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
 void
 meric_plugin::add_metric( Metric& metric )
 {
-    logging::info() << "add metric called with: " << metric.name();
+    logging::info() << "Added metric " << metric.name();
 }
 
 
@@ -156,7 +153,7 @@ template <typename C>
 void
 meric_plugin::get_all_values( Metric& metric, C& cursor )
 {
-    logging::info() << "get_all_values called with: " << metric.name();
+    logging::debug() << "Reading all recorded values for " << metric.name();
 
     // write the collected data to the cursor.
     for ( auto& tvpair : measurement.readings( metric ) )

@@ -6,6 +6,7 @@
  */
 
 #include "ExtlibWrapper.h"
+#include "utils.h"
 
 #include <scorep/plugin/plugin.hpp>
 
@@ -116,4 +117,19 @@ ExtlibWrapper::calc_energy_consumption( TimeStamp begin, TimeStamp end )
     return TimeStamp( extlib_calc_energy_consumption( begin.get(), end.get() ),
                       /*deleter=*/ &extlib_free_energy_timestamp );
 }
+}
+
+
+std::string
+MericPlugin::ExtlibWrapper::Domain::name() const
+{
+    return ExtlibWrapper::domain_name_by_id.at( id );
+}
+
+
+
+std::string
+MericPlugin::ExtlibWrapper::Domain::counter_names() const
+{
+    return join_strings( map_keys( counter_idx_by_name ), "," );
 }

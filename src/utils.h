@@ -18,6 +18,10 @@ split_string( const std::string& str,
               char               delim = ' ' );
 
 
+std::string
+join_strings( const std::vector<std::string>& strings,
+              std::string                     delim );
+
 template <typename K, typename V>
 std::unordered_map<V, K>
 map_inverse( const std::unordered_map<K, V>& map )

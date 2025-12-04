@@ -40,6 +40,12 @@ public:
         unsigned int                                  idx; // The index in an ExtlibEnergyTimeStamp.domain_data
 
         std::unordered_map<std::string, unsigned int> counter_idx_by_name;
+
+        std::string
+        name() const;
+
+        std::string
+        counter_names() const;
     };
 
     std::unordered_map<std::string, Domain>
@@ -69,19 +75,4 @@ private:
 
     ExtlibEnergyPtr energy_domains;
 };
-}
-
-
-namespace std
-{
-inline ostream&
-operator<<( ostream& os, const MericPlugin::ExtlibWrapper::Domain& domain )
-{
-    os << " Counters for domain " << MericPlugin::ExtlibWrapper::domain_name_by_id.at( domain.id ) << ": ";
-    for ( auto counter_it : domain.counter_idx_by_name )
-    {
-        os << counter_it.first << ", ";
-    }
-    return os;
-}
 }

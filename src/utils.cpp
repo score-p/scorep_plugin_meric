@@ -7,6 +7,7 @@
 #include "utils.h"
 #include <string>
 #include <vector>
+#include <sstream>
 
 namespace MericPlugin
 {
@@ -40,5 +41,24 @@ split_string( const std::string& str, char delim )
         prev = pos + 1;
     }
     return split;
+}
+
+std::string
+join_strings( const std::vector<std::string>& strings, std::string delim )
+{
+    if ( strings.empty() )
+    {
+        return "";
+    }
+    std::stringstream ss;
+    auto              it = strings.begin();
+    ss << *it;
+    ++it;
+    while ( it != strings.end() )
+    {
+        ss << delim << *it;
+        ++it;
+    }
+    return ss.str();
 }
 }
