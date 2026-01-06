@@ -49,6 +49,10 @@ The following cache variables may also be set:
   The directory containing ``meric_ext.h``. Usually identical to ``Meric_INCLUDE_DIR``
 ``Meric_EXT_LIB``
   The full path to libmeric_ext.
+``Meric_BUILD_DIR``
+  The full path to build/MERICconf.log
+  This file lists headers found by Meric's configure. Needed to determine additional
+  libraries to link.
 
 #]=======================================================================]
 find_path(Meric_INCLUDE_DIR
@@ -60,13 +64,18 @@ find_library(Meric_LIBRARY
 find_library(Meric_EXT_LIB
   NAMES meric_ext)
 
+find_path(Meric_BUILD_DIR
+  PATH_SUFFIXES build
+  NAMES MERICconf.log)
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Meric
   REQUIRED_VARS
     Meric_INCLUDE_DIR
     Meric_EXT_DIR
     Meric_LIBRARY
-    Meric_EXT_LIB)
+    Meric_EXT_LIB
+    Meric_BUILD_DIR)
 
 if(Meric_FOUND)
   set(Meric_LIBRARIES ${Meric_LIBRARY} ${Meric_EXT_LIB})
@@ -75,6 +84,11 @@ if(Meric_FOUND)
   else()
     set(Meric_INCLUDE_DIRS ${Meric_INCLUDE_DIR} ${Meric_EXT_DIR})
   endif()
+
+  # Determine additional libraries required by Meric
+  file(READ "${Meric_BUILD_DIR}/MERICconf.log" Meric_CONF_LOG_CONTENT)
+  string(FIND ${Meric_CONF_LOG_CONTENT} "NVML_H" Meric_CONF_HAVE_NVML_H)
+  unset(Meric_CONF_LOG_CONTENT)
 endif()
 
 if(Meric_FOUND AND NOT TARGET Meric::libmeric)
@@ -88,10 +102,17 @@ if(Meric_FOUND AND NOT TARGET Meric::libmeric)
     IMPORTED_LOCATION "${Meric_EXT_LIB}"
     INTERFACE_INCLUDE_DIRECTORIES "${Meric_EXT_DIR}"
     INTERFACE_LINK_OPTIONS "-fopenmp")
+  if(${Meric_CONF_HAVE_NVML_H} GREATER_EQUAL 0)
+    find_package(CUDAToolkit REQUIRED)
+    target_link_libraries(Meric::libmeric_ext CUDA::nvml)
+  endif()
 endif()
 
 mark_as_advanced(
   Meric_INCLUDE_DIR
   Meric_LIBRARY
   Meric_EXT_DIR
-  Meric_EXT_LIB)
+  Meric_EXT_LIB
+  Meric_BUILD_DIR)
+
+unset(Meric_CONF_HAVE_NVML_H)
