@@ -104,7 +104,7 @@ if(Meric_FOUND AND NOT TARGET Meric::libmeric)
     INTERFACE_LINK_OPTIONS "-fopenmp")
   if(${Meric_CONF_HAVE_NVML_H} GREATER_EQUAL 0)
     find_package(CUDAToolkit REQUIRED)
-    target_link_libraries(Meric::libmeric_ext CUDA::nvml)
+    target_link_libraries(Meric::libmeric_ext INTERFACE CUDA::nvml)
   endif()
 endif()
 
