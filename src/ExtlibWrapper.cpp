@@ -71,16 +71,9 @@ ExtlibWrapper::ExtlibWrapper( const std::vector<unsigned int>& requested_domains
 std::unordered_map<std::string, ExtlibWrapper::Domain>
 ExtlibWrapper::query_enabled_domains()
 {
+    TimeStamp ts = this->read();
+
     std::unordered_map<std::string, Domain> domain_by_name;
-    // Try to read an energy timestamp, which contains information on the available
-    // counters for each domain.
-    ExtlibEnergyTimeStamp* ts = extlib_read_energy_measurements( energy_domains.get() );
-    if ( ts == nullptr )
-    {
-        // Reading the timestamp failed: The plug-in is not usable.
-        throw std::runtime_error( "Could not read an energy timestamp with MERIC" );
-    }
-    // Store names of all available counters for all enabled domains
     for ( unsigned int domain_idx = 0; domain_idx < EXTLIB_NUM_DOMAINS; ++domain_idx )
     {
         const auto& domain = ts->domain_data[ domain_idx ];
@@ -106,8 +99,12 @@ ExtlibWrapper::query_enabled_domains()
 ExtlibWrapper::TimeStamp
 ExtlibWrapper::read()
 {
-    return TimeStamp( extlib_read_energy_measurements( energy_domains.get() ),
-                      /* deleter=*/ &extlib_free_energy_timestamp );
+    ExtlibEnergyTimeStamp* ts = extlib_read_energy_measurements( energy_domains.get() );
+    if ( !ts )
+    {
+        throw std::runtime_error( "Could not read an energy timestamp with MERIC" );
+    }
+    return TimeStamp( ts, /* deleter=*/ &extlib_free_energy_timestamp );
 }
 
 
