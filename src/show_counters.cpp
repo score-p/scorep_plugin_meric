@@ -6,9 +6,10 @@
  */
 #include "ExtlibWrapper.h"
 
-#include <scorep/plugin/plugin.hpp>
+#include <scorep/plugin/log.hpp>
 
 #include <iostream>
+
 
 using namespace MericPlugin;
 

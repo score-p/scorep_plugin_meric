@@ -7,6 +7,7 @@
  */
 #include "MeasurementThread.h"
 
+
 namespace MericPlugin
 {
 MeasurementThread::MeasurementThread( std::chrono::microseconds interval ) : _interval( interval )

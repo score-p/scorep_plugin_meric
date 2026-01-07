@@ -8,7 +8,7 @@
 #include "ExtlibWrapper.h"
 #include "utils.h"
 
-#include <scorep/plugin/plugin.hpp>
+#include <scorep/plugin/log.hpp>
 
 
 using scorep::plugin::logging;

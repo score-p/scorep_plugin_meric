@@ -7,10 +7,9 @@
  */
 #include "Metric.h"
 
-#include <scorep/plugin/plugin.hpp>
-
 #include <chrono>
 #include <string>
+#include <sstream>
 
 
 namespace MericPlugin

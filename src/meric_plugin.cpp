@@ -11,6 +11,7 @@
 #include <scorep/plugin/plugin.hpp>
 
 #include <chrono>
+#include <sstream>
 
 
 using scorep::plugin::logging;

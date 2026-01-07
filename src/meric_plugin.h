@@ -12,7 +12,9 @@
 
 #include <scorep/plugin/plugin.hpp>
 
+#include <unordered_map>
 #include <vector>
+
 
 namespace MericPlugin
 {

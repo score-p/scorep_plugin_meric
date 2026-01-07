@@ -10,10 +10,13 @@
 #include "Metric.h"
 #include "ExtlibWrapper.h"
 
+#include <scorep/chrono/chrono.hpp>
+
 #include <chrono>
 #include <thread>
 #include <unordered_map>
 #include <vector>
+
 
 namespace MericPlugin
 {

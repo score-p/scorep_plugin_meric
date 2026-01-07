@@ -8,13 +8,13 @@
 #pragma once
 
 #include <meric_ext.h>
-#include <scorep/plugin/plugin.hpp>
 
 #include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <type_traits>
+
 
 namespace MericPlugin
 {
