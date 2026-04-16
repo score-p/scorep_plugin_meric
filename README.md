@@ -46,8 +46,8 @@ export SCOREP_METRIC_PLUGINS=meric_plugin
 export SCOREP_METRIC_MERIC_PLUGIN=RAPL:package_0
 # List the Meric energy domains that should be enabled
 export SCOREP_METRIC_MERIC_PLUGIN_DOMAINS=RAPL,
-# Set the sampling interval
-export SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_MS=20000
+# Set the sampling interval in micro seconds
+export SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_US=20000
 # This plugin is per-host, async, which only works with tracing
 export SCOREP_ENABLE_PROFILING=0
 export SCOREP_ENABLE_TRACING=1
