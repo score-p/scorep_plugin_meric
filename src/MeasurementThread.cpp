@@ -54,13 +54,13 @@ MeasurementThread::readings( Metric& handle )
 void
 MeasurementThread::collect_readings()
 {
-    ExtlibWrapper::TimeStamp prev, cur, res;
+    ExtlibWrapper::TimeStamp prev, cur;
     prev = this->extlib.read();
     while ( active )
     {
         const auto timestamp = scorep::chrono::measurement_clock::now();
         cur = this->extlib.read();
-        res = ExtlibWrapper::calc_energy_consumption( prev, cur );
+        ExtlibWrapper::TimeStamp res = ExtlibWrapper::calc_energy_consumption( prev, cur );
         for ( auto& item : data )
         {
             const auto& metric   = item.first.get();
