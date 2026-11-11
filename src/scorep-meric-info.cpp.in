@@ -1,0 +1,550 @@
+/*
+ * SPDX-FileCopyrightText: (c) 2025 Forschungszentrum Jülich GmbH <fz-juelich.de>
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+#include "ExtlibWrapper.h"
+
+#define SHEREDOM_JSON_H_IMPLEMENTATION
+#include "json.h"
+
+#include <scorep/plugin/log.hpp>
+
+#include <iostream>
+#include <string>
+#include <array>
+#include <memory>
+#include <cstdio>
+#include <iomanip>
+#include <cmath>
+
+using namespace MericPlugin;
+using scorep::plugin::logging;
+
+struct keyValue_t
+{
+    std::string   key;
+    json_value_s* value;
+};
+
+bool
+verifyJsonValue( keyValue_t element,  std::string targetKey, std::string targetValue )
+{
+    if ( element.value->type == json_type_string )
+    {
+        std::string val = std::string( ( ( json_string_s* )element.value->payload )->string );
+        if ( element.key == targetKey )
+        {
+            if ( val == targetValue )
+            {
+                logging::info() << "Info: Found expected " << targetKey << ": " << val;
+                return true;
+            }
+            else
+            {
+                logging::info() << "Error: Found unexpected " << targetKey << ": " << val;
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
+bool
+testUnexpectedJsonType( json_value_s* value, std::vector<size_t> unexpectedTypes )
+{
+    for ( const auto& elem : unexpectedTypes )
+    {
+        if ( value->type == elem )
+        {
+            std::string str_type = "";
+            switch ( elem )
+            {
+                case json_type_string:
+                    str_type = "string";
+                    break;
+                case   json_type_number:
+                    str_type = "number";
+                    break;
+                case  json_type_object:
+                    str_type = "object";
+                    break;
+                case   json_type_array:
+                    str_type = "array";
+                    break;
+                default:
+                    str_type = "type (enum value " + std::to_string( elem );
+            }
+            ;
+            logging::error() << "Error: Found unexpected " << str_type << "!";
+            return true;
+        }
+    }
+    return false;
+}
+
+struct power_counter_domain_t
+{
+    std::string              name;
+    std::vector<std::string> counters;
+    long int                 default_interval;
+    long int                 min_interval;
+};
+
+// Relevant information from Meric's systemInfo -j output
+struct meric_json_data_t
+{
+    // for verification purposes
+    std::string used_merric;
+    std::string schema_name;
+    std::string schema_version;
+
+    // User releant information
+    std::vector<power_counter_domain_t> domains;
+};
+
+class NullBuffer : public std::streambuf
+{
+public:
+    int
+    overflow( int c ) override
+    {
+        return c;
+    }
+};
+
+class DisableCerr
+{
+    NullBuffer      null_buf;
+    std::streambuf* old_buf;
+public:
+    DisableCerr() : old_buf( std::cerr.rdbuf( &null_buf ) )
+    {
+    }
+    ~DisableCerr()
+    {
+        std::cerr.rdbuf( old_buf );
+    }
+};
+
+
+bool
+parseJSONData( meric_json_data_t& data )
+{
+    std::array<char, 128> buffer;
+    std::string           input;
+    data.used_merric = "@Meric_ROOT@";
+    std::string                                       cmd = data.used_merric + "/bin/systemInfo -j";
+    std::unique_ptr<FILE, decltype(& pclose )>        pipe( popen( cmd.c_str(), "r" ), pclose );
+    logging::info() << "Used Merric installation:" << data.used_merric;
+
+    if ( !pipe )
+    {
+        logging::error() << "Error executing `systemInfo -j`!";
+        return false;
+    }
+
+    // Blockwise read
+    while ( fgets( buffer.data(), buffer.size(), pipe.get() ) != nullptr )
+    {
+        input += buffer.data();
+    }
+
+    // Part of the JSON data will be used as pure textual information to the user
+    // Part will be used to compare and verify data given by the extlib connection to Meric
+    json_value_s* root = json_parse( input.c_str(), input.length() );
+    if ( !root )
+    {
+        logging::error() << "Failed to parse JSON!";
+        return false;
+    }
+
+    if ( root->type != json_type_object )
+    {
+        logging::error() << "Error: Data is not a JSON object!";
+        return false;
+    }
+
+    json_object_s* object = ( json_object_s* )root->payload;
+
+    // Loop through all properties of the object with known structure
+    for ( json_object_element_s* element = object->start; element != nullptr; element = element->next )
+    {
+        // Root level
+        keyValue_t e = { element->name->string,  element->value };
+
+        verifyJsonValue( e, "schema", "meric.systemInfo" );
+        verifyJsonValue( e, "schema_version", "1.2" );
+
+        testUnexpectedJsonType( e.value, { json_type_number, json_type_array } );
+
+        if ( e.value->type == json_type_object )
+        {
+            json_object_s* subobject = ( json_object_s* )e.value->payload;
+            if ( e.key == "system" )
+            {
+                for ( json_object_element_s* sys_element = subobject->start; sys_element != nullptr; sys_element = sys_element->next )
+                {
+                    keyValue_t s = { sys_element->name->string,  sys_element->value };
+                    if ( s.key == "cpu" )
+                    {
+                        if ( s.value->type != json_type_object )
+                        {
+                            logging::error() << "Error: Found unexpected element type!";
+                            continue;
+                        }
+                        int         sockets                = 0;
+                        std::string name                   = "";
+                        bool        power_limits_available = false;
+                        std::string power_limits           = "";
+                        for ( json_object_element_s* cpu = ( ( json_object_s* )s.value->payload )->start; cpu != nullptr; cpu = cpu->next )
+                        {
+                            keyValue_t c = { cpu->name->string, cpu->value };
+                            if ( c.key == "name" )
+                            {
+                                name = std::string( ( ( json_string_s* )c.value->payload )->string );
+                            }
+                            else if ( c.key == "sockets_per_node" )
+                            {
+                                json_number_s* num = ( json_number_s* )c.value->payload;
+                                sockets = std::stoi( std::string( num->number, num->number_size ) );
+                            }
+                            else if ( c.key == "power_limits" )
+                            {
+                                if ( cpu->value->type != json_type_object )
+                                {
+                                    logging::error() << "Error: Found unexpected element type!";
+                                    continue;
+                                }
+                                for ( json_object_element_s* limits = ( ( json_object_s* )c.value->payload )->start; limits != nullptr; limits = limits->next )
+                                {
+                                    keyValue_t l = { limits->name->string, limits->value };
+
+                                    std::vector<std::string> entry;
+
+                                    if ( l.key == "available" )
+                                    {
+                                        if ( l.value->type == json_type_false )
+                                        {
+                                            power_limits_available = false;
+                                        }
+                                        else
+                                        {
+                                            power_limits_available = true;
+                                        }
+                                    }
+                                    else if ( l.key == "power_domain" )
+                                    {
+                                        if ( !power_limits_available )
+                                        {
+                                            power_limits = "Power limits not available";
+                                            ;
+                                            continue;
+                                        }
+                                        logging::info() << "DEBUG CPU power domains with values";
+                                    }
+                                }
+                            }
+                        }
+                        std::cout << "CPUs: " << sockets << "x " << name << std::endl;
+                        std::cout << "   " << power_limits << std::endl;
+                    }
+                    else if ( s.key == "gpu" )
+                    {
+                        if ( s.value->type != json_type_array )
+                        {
+                            logging::error() << "Error: Found unexpected element type!";
+                            continue;
+                        }
+                        for ( json_array_element_s* arr_elem = ( ( json_array_s* )s.value->payload )->start; arr_elem != nullptr; arr_elem = arr_elem->next )
+                        {
+                            if ( arr_elem->value->type != json_type_object )
+                            {
+                                logging::error() << "Error: Found unexpected element type!";
+                                continue;
+                            }
+                            int                                     count = 0;
+                            std::string                             name  = "";
+                            std::vector <std::vector<std::string> > powerlimits;
+                            for ( json_object_element_s* gpu = ( ( json_object_s* )arr_elem->value->payload )->start; gpu != nullptr; gpu = gpu->next )
+                            {
+                                keyValue_t g = { gpu->name->string, gpu->value };
+                                if ( g.key == "name" )
+                                {
+                                    name = std::string( ( ( json_string_s* )g.value->payload )->string );
+                                }
+                                else if ( g.key == "count" )
+                                {
+                                    json_number_s* num = ( json_number_s* )g.value->payload;
+                                    count = std::stoi( std::string( num->number, num->number_size ) );
+                                }
+                                else if ( g.key == "power_limits" )
+                                {
+                                    logging::info() << "DEBUG power_limits";
+                                    if ( gpu->value->type != json_type_object )
+                                    {
+                                        logging::error() << "Error: Found unexpected element type!";
+                                        continue;
+                                    }
+                                    for ( json_object_element_s* limits = ( ( json_object_s* )g.value->payload )->start; limits != nullptr; limits = limits->next )
+                                    {
+                                        keyValue_t l = { limits->name->string, limits->value };
+                                        if ( l.value->type != json_type_number )
+                                        {
+                                            logging::error() << "Error: Found unexpected element type!";
+                                            continue;
+                                        }
+                                        std::vector<std::string> entry;
+
+                                        if ( l.key == "min_power_w" )
+                                        {
+                                            entry.push_back( "Min. power limit" );
+                                        }
+                                        else if ( l.key == "max_power_w" )
+                                        {
+                                            entry.push_back( "Max. power limit" );
+                                        }
+                                        else if ( l.key == "default_power_w" )
+                                        {
+                                            entry.push_back( "Default power limit" );
+                                        }
+                                        else if ( l.key == "current_power_w" )
+                                        {
+                                            entry.push_back( "Current power limit" );
+                                        }
+                                        ;
+                                        json_number_s* num = ( json_number_s* )l.value->payload;
+                                        entry.push_back( std::string( num->number, num->number_size ) );
+                                        powerlimits.push_back( entry );
+                                    }
+                                }
+                            }
+                            std::cout << "GPUs: " << count << "x " << name << std::endl;
+                            for ( const auto& elem : powerlimits )
+                            {
+                                std::cout << "   " << std::setw( 19 ) << elem[ 0 ] << ": " << elem[ 1 ] << " W" << std::endl;
+                            }
+                        }
+                    }
+                }
+            }
+            else if ( e.key == "power_monitoring" )
+            {
+                for ( json_object_element_s* pm_element = subobject->start; pm_element != nullptr; pm_element = pm_element->next )
+                {
+                    keyValue_t pm = { pm_element->name->string, pm_element->value };
+                    std::cout << "\nPower monitoring systems:" << "\n";
+                    if ( pm.value->type == json_type_array )
+                    {
+                        for ( json_array_element_s* arr_elem = ( ( json_array_s* )pm.value->payload )->start; arr_elem != nullptr; arr_elem = arr_elem->next )
+                        {
+                            if ( arr_elem->value->type != json_type_object )
+                            {
+                                logging::error() << "Error: Found unexpected element type!";
+                                continue;
+                            }
+                            json_object_s* sys_arr_obj = ( json_object_s* )arr_elem->value->payload;
+                            // New element for the domain counter data
+                            power_counter_domain_t new_domain;
+
+                            for ( json_object_element_s* pm_sys = sys_arr_obj->start; pm_sys != nullptr; pm_sys = pm_sys->next )
+                            {
+                                keyValue_t sys = { pm_sys->name->string, pm_sys->value };
+                                if ( sys.key == "name" )
+                                {
+                                    new_domain.name = std::string( ( ( json_string_s* )sys.value->payload )->string );
+                                    std::cout << "  " << new_domain.name << ": ";
+                                }
+                                else if ( sys.key == "domains" && sys.value->type == json_type_array )
+                                {
+                                    bool first = true;
+                                    for ( json_array_element_s* arr_elem = ( ( json_array_s* )sys.value->payload )->start; arr_elem != nullptr; arr_elem = arr_elem->next )
+                                    {
+                                        if ( arr_elem->value->type != json_type_string )
+                                        {
+                                            logging::error() << "Error: Found unexpected type in domain array!";
+                                            continue;
+                                        }
+
+                                        std::string sep = ", ";
+                                        if ( first )
+                                        {
+                                            sep   = "";
+                                            first = false;
+                                        }
+                                        std::string val = std::string( ( ( json_string_s* )arr_elem->value->payload )->string );
+                                        std::cout << sep << val;
+                                        new_domain.counters.push_back( val );
+                                    }
+                                    std::cout << std::endl;
+                                }
+                                else if ( sys.key == "sampling_frequency_hz" )
+                                {
+                                    std::cout << "    Sampling Frequency:" << std::endl;
+                                    std::ios init_state( nullptr );
+                                    init_state.copyfmt( std::cout );
+                                    for ( json_object_element_s* freqs = ( ( json_object_s* )sys.value->payload )->start; freqs != nullptr; freqs = freqs->next )
+                                    {
+                                        keyValue_t freq = { freqs->name->string, freqs->value };
+                                        if ( freq.value->type != json_type_number )
+                                        {
+                                            logging::error() << "Error: Found unexpected element found in  " << sys.key << "!";
+                                            continue;
+                                        }
+                                        std::cout << "      " << std::left << std::setw( 8 ) << freq.key;
+                                        json_number_s* num          = ( json_number_s* )freq.value->payload;
+                                        double         double_value = std::stod( std::string( num->number, num->number_size ) );
+                                        long int       int_val      = static_cast<long int>( std::round( 1000000 / double_value ) );
+                                        // ASSUMPTION hz
+                                        std::cout << " Freq. in Hz=" << std::setprecision( 4 ) << std::right << std::setw( 8 ) << double_value;
+                                        std::cout << " (as microsecond interval=" << std::right << std::setw( 8 ) << int_val << ")" << std::endl;
+                                        if ( freq.key == "default" )
+                                        {
+                                            new_domain.default_interval = int_val;
+                                        }
+                                        else if ( freq.key == "max" )
+                                        {
+                                            new_domain.min_interval = int_val;
+                                            // last element for entry, add it to the vector
+                                            data.domains.push_back( new_domain );
+                                        }
+                                        else
+                                        {
+                                            logging::error() << "Error: Found unexpected type in domain array!";
+                                            continue;
+                                        }
+                                    }
+                                    std::cout.copyfmt( init_state );
+                                }
+                                else
+                                {
+                                    logging::error() << "Error: Found unexpected element found in power_monitoring systems!";
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        logging::error() << "Error: Found unexpected element type!";
+                    }
+                }
+            }
+            else
+            {
+                logging::error() << "Error: Found unexpected JSON object with key: " << e.key;
+            }
+        }
+    }
+    return true;
+}
+
+void
+usage()
+{
+    std::cout << "Usage: scorep-meric-info <options>\n"
+              << "This is the hardware counter information tool for the Score-P Meric plugin.\n"
+              << "\n"
+              << "Options:\n"
+              << "  --verbose, -v   Verbose output.\n"
+              << "  --help, -h      Show help output. Does not execute any other command.\n"
+              << "\n"
+              << "\n"
+              << "Report bugs to <support@score-p.org>" << std::endl;
+}
+
+int
+main( int argc, char* argv[] )
+{
+    bool verbose = false;
+    for ( int i = 1; i < argc; ++i )
+    {
+        std::string arg = argv[ i ];
+        if ( arg == "-v" || arg == "--verbose" )
+        {
+            verbose = true;
+        }
+        else if ( arg == "-h" || arg == "--help" )
+        {
+            usage();
+            exit( 0 );
+        }
+        else
+        {
+            logging::error() << "Unknown argument:" << arg;
+            usage();
+            exit( 1 );
+        }
+    }
+
+    if ( verbose )
+    {
+        scorep::plugin::log::set_min_severity_level( nitro::log::severity_level::info );
+    }
+    else
+    {
+        scorep::plugin::log::set_min_severity_level( nitro::log::severity_level::error );
+    }
+
+    // Query extlib for domain an counter information
+
+    // Disable unneeded warnings from the exlib TODO followup on Meric side
+    std::unordered_map<std::string, ExtlibWrapper::Domain> domains;
+    {
+        DisableCerr disabledCerr;
+        domains = ExtlibWrapper( ExtlibWrapper::all_domain_ids() ).query_enabled_domains();
+    }
+    unsigned int extlib_num_domains  = domains.size();
+    unsigned int extlib_num_counters = 0;
+    for ( const auto& it : domains )
+    {
+        const size_t n = it.second.counter_idx_by_name.size();
+        extlib_num_counters += n;
+    }
+
+    // Query JSON data via Meric's systemInfo tool
+    meric_json_data_t json_data;
+    parseJSONData( json_data );
+
+    // cross check between extlib source and json
+    logging::info() << "Checking extlib data against JSON data:";
+    if ( extlib_num_domains != json_data.domains.size() )
+    {
+        logging::error() << "Number of domains differs between extlib and json! (extlib=" << extlib_num_domains << " vs. json=" << json_data.domains.size() << ")";
+        return 1;
+    }
+    auto   target_domain_num = json_data.domains.size();
+    size_t domains_found     = 0;
+    for ( const auto& json_domain : json_data.domains )
+    {
+        for ( const auto& extlib_domain : domains )
+        {
+            if ( extlib_domain.first == json_domain.name )
+            {
+                domains_found++;
+                logging::info() << "- matching domain: " << json_domain.name  << " (" << domains_found << "/" << target_domain_num << ")";
+                if ( extlib_domain.second.counter_idx_by_name.size()  != json_domain.counters.size() )
+                {
+                    logging::error() << "The number of counters in domain " << json_domain.name << " differs! (extlib=" << extlib_domain.second.counter_idx_by_name.size() << " vs. json=" << json_domain.counters.size() << ")";
+                    return 1;
+                }
+
+                auto   target_counter_num = json_domain.counters.size();
+                size_t counters_found     = 0;
+                for ( const auto& json_counter : json_domain.counters )
+                {
+                    for ( const auto& extlib_counter : extlib_domain.second.counter_idx_by_name )
+                    {
+                        if ( json_counter == extlib_counter.first )
+                        {
+                            counters_found++;
+                            logging::info() << "  - matching counter: " << json_counter << " (" << counters_found << "/" << target_counter_num << ")";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}

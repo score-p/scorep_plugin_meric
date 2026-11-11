@@ -60,12 +60,29 @@ target_link_libraries(show_counters PUBLIC
   scorep-plugin-cxx
   Meric::libmeric_ext)
 
+
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/scorep-meric-info.cpp.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/scorep-meric-info.cpp"
+)
+add_executable(scorep-meric-info "${CMAKE_CURRENT_BINARY_DIR}/src/scorep-meric-info.cpp" ${MERIC_PLUGIN_SRC})
+target_compile_features(scorep-meric-info PUBLIC cxx_std_14)
+target_compile_options(scorep-meric-info INTERFACE -Wall -pedantic -Wextra)
+target_link_libraries(scorep-meric-info PUBLIC
+  scorep-plugin-cxx
+  Meric::libmeric_ext)
+target_include_directories(scorep-meric-info PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
+
+
 include_directories(include)
 
 install(TARGETS meric_plugin
     LIBRARY DESTINATION lib)
 
-install(TARGETS show_counters
+install(TARGETS show_counters scorep-meric-info
     RUNTIME DESTINATION bin )
 
 if ( MERIC_PLUGIN_DEVELOPER_MODE )
@@ -87,3 +104,4 @@ endif( MERIC_PLUGIN_DEVELOPER_MODE )
 
 
 add_subdirectory(test)
+
