@@ -49,10 +49,6 @@ The following cache variables may also be set:
   The directory containing ``meric_ext.h``. Usually identical to ``Meric_INCLUDE_DIR``
 ``Meric_EXT_LIB``
   The full path to libmeric_ext.
-``Meric_BUILD_DIR``
-  The full path to build/MERICconf.log
-  This file lists headers found by Meric's configure. Needed to determine additional
-  libraries to link.
 
 #]=======================================================================]
 find_path(Meric_INCLUDE_DIR
@@ -64,18 +60,13 @@ find_library(Meric_LIBRARY
 find_library(Meric_EXT_LIB
   NAMES meric_ext)
 
-find_path(Meric_BUILD_DIR
-  PATH_SUFFIXES build
-  NAMES MERICconf.log)
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Meric
   REQUIRED_VARS
     Meric_INCLUDE_DIR
     Meric_EXT_DIR
     Meric_LIBRARY
-    Meric_EXT_LIB
-    Meric_BUILD_DIR)
+    Meric_EXT_LIB)
 
 if(Meric_FOUND)
   set(Meric_LIBRARIES ${Meric_LIBRARY} ${Meric_EXT_LIB})
@@ -86,9 +77,38 @@ if(Meric_FOUND)
   endif()
 
   # Determine additional libraries required by Meric
-  file(READ "${Meric_BUILD_DIR}/MERICconf.log" Meric_CONF_LOG_CONTENT)
-  string(FIND ${Meric_CONF_LOG_CONTENT} "NVML_H" Meric_CONF_HAVE_NVML_H)
-  unset(Meric_CONF_LOG_CONTENT)
+  set(Meric_CONF_HAVE_NVML FALSE)
+  message (STATUS "Reading Meric configuration via the tool systemInfo: ${Meric_ROOT}/bin/systemInfo")
+  execute_process(
+    COMMAND ${Meric_ROOT}/bin/systemInfo -j
+    OUTPUT_VARIABLE JSON_DATA
+    ERROR_VARIABLE COMMAND_ERROR
+    RESULT_VARIABLE COMMAND_RESULT
+  )
+  if(NOT COMMAND_RESULT EQUAL 0)
+    message(FATAL_ERROR "Error running cmd `${Meric_ROOT}/bin/systemInfo -j`, output:\n ${COMMAND_ERROR}")
+  endif()
+
+  # cleanup any whitespace if necessary
+  string(STRIP "${JSON_DATA}" JSON_DATA)
+  
+  string(JSON ARRAY_LENGTH LENGTH "${JSON_DATA}" "power_monitoring" "systems")
+  if(ARRAY_LENGTH GREATER 0)
+    math(EXPR MAX_IDX "${ARRAY_LENGTH} - 1")
+    foreach(IDX RANGE ${MAX_IDX})
+      string(JSON SYS_NAME GET "${JSON_DATA}" "power_monitoring" "systems" ${IDX} "name")
+      if(SYS_NAME STREQUAL "NVML")
+        message(STATUS "found NVML in Meric configuration, requiring CUDAToolkit")
+	set(Meric_CONF_HAVE_NVML TRUE)
+        break()
+      endif()
+    endforeach()
+  endif()
+
+  if (NOT Meric_CONF_HAVE_NVML)
+    message(STATUS "no NVML found in Meric configuration")
+  endif()
+
 endif()
 
 if(Meric_FOUND AND NOT TARGET Meric::libmeric)
@@ -102,7 +122,7 @@ if(Meric_FOUND AND NOT TARGET Meric::libmeric)
     IMPORTED_LOCATION "${Meric_EXT_LIB}"
     INTERFACE_INCLUDE_DIRECTORIES "${Meric_EXT_DIR}"
     INTERFACE_LINK_OPTIONS "-fopenmp")
-  if(${Meric_CONF_HAVE_NVML_H} GREATER_EQUAL 0)
+  if(Meric_CONF_HAVE_NVML)
     find_package(CUDAToolkit REQUIRED)
     target_link_libraries(Meric::libmeric_ext INTERFACE CUDA::nvml)
   endif()
@@ -115,4 +135,4 @@ mark_as_advanced(
   Meric_EXT_LIB
   Meric_BUILD_DIR)
 
-unset(Meric_CONF_HAVE_NVML_H)
+unset(Meric_CONF_HAVE_NVML)
