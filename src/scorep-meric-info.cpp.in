@@ -12,6 +12,7 @@
 #include <scorep/plugin/log.hpp>
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <array>
 #include <memory>
@@ -130,7 +131,7 @@ public:
 
 
 bool
-parseJSONData( meric_json_data_t& data )
+parseJSONData( meric_json_data_t& data, std::streambuf* sbuf )
 {
     std::array<char, 128> buffer;
     std::string           input;
@@ -139,6 +140,7 @@ parseJSONData( meric_json_data_t& data )
     std::unique_ptr<FILE, decltype(& pclose )>        pipe( popen( cmd.c_str(), "r" ), pclose );
     logging::info() << "Used Merric installation:" << data.used_merric;
 
+    std::ostream out( sbuf );
     if ( !pipe )
     {
         logging::error() << "Error executing `systemInfo -j`!";
@@ -239,7 +241,6 @@ parseJSONData( meric_json_data_t& data )
                                         if ( !power_limits_available )
                                         {
                                             power_limits = "Power limits not available";
-                                            ;
                                             continue;
                                         }
                                         logging::info() << "DEBUG CPU power domains with values";
@@ -247,8 +248,8 @@ parseJSONData( meric_json_data_t& data )
                                 }
                             }
                         }
-                        std::cout << "CPUs: " << sockets << "x " << name << std::endl;
-                        std::cout << "   " << power_limits << std::endl;
+                        out << "CPUs: " << sockets << "x " << name << std::endl;
+                        out << "   " << power_limits << std::endl;
                     }
                     else if ( s.key == "gpu" )
                     {
@@ -320,10 +321,10 @@ parseJSONData( meric_json_data_t& data )
                                     }
                                 }
                             }
-                            std::cout << "GPUs: " << count << "x " << name << std::endl;
+                            out << "GPUs: " << count << "x " << name << std::endl;
                             for ( const auto& elem : powerlimits )
                             {
-                                std::cout << "   " << std::setw( 19 ) << elem[ 0 ] << ": " << elem[ 1 ] << " W" << std::endl;
+                                out << "   " << std::setw( 19 ) << elem[ 0 ] << ": " << elem[ 1 ] << " W" << std::endl;
                             }
                         }
                     }
@@ -334,7 +335,7 @@ parseJSONData( meric_json_data_t& data )
                 for ( json_object_element_s* pm_element = subobject->start; pm_element != nullptr; pm_element = pm_element->next )
                 {
                     keyValue_t pm = { pm_element->name->string, pm_element->value };
-                    std::cout << "\nPower monitoring systems:" << "\n";
+                    out << "\nPower monitoring systems:" << "\n";
                     if ( pm.value->type == json_type_array )
                     {
                         for ( json_array_element_s* arr_elem = ( ( json_array_s* )pm.value->payload )->start; arr_elem != nullptr; arr_elem = arr_elem->next )
@@ -354,7 +355,7 @@ parseJSONData( meric_json_data_t& data )
                                 if ( sys.key == "name" )
                                 {
                                     new_domain.name = std::string( ( ( json_string_s* )sys.value->payload )->string );
-                                    std::cout << "  " << new_domain.name << ": ";
+                                    out << "  " << new_domain.name << ": ";
                                 }
                                 else if ( sys.key == "domains" && sys.value->type == json_type_array )
                                 {
@@ -374,16 +375,16 @@ parseJSONData( meric_json_data_t& data )
                                             first = false;
                                         }
                                         std::string val = std::string( ( ( json_string_s* )arr_elem->value->payload )->string );
-                                        std::cout << sep << val;
+                                        out << sep << val;
                                         new_domain.counters.push_back( val );
                                     }
-                                    std::cout << std::endl;
+                                    out << std::endl;
                                 }
                                 else if ( sys.key == "sampling_frequency_hz" )
                                 {
-                                    std::cout << "    Sampling Frequency:" << std::endl;
+                                    out << "    Sampling Frequency:" << std::endl;
                                     std::ios init_state( nullptr );
-                                    init_state.copyfmt( std::cout );
+                                    init_state.copyfmt( out );
                                     for ( json_object_element_s* freqs = ( ( json_object_s* )sys.value->payload )->start; freqs != nullptr; freqs = freqs->next )
                                     {
                                         keyValue_t freq = { freqs->name->string, freqs->value };
@@ -392,13 +393,13 @@ parseJSONData( meric_json_data_t& data )
                                             logging::error() << "Error: Found unexpected element found in  " << sys.key << "!";
                                             continue;
                                         }
-                                        std::cout << "      " << std::left << std::setw( 8 ) << freq.key;
+                                        out << "      " << std::left << std::setw( 8 ) << freq.key;
                                         json_number_s* num          = ( json_number_s* )freq.value->payload;
                                         double         double_value = std::stod( std::string( num->number, num->number_size ) );
                                         long int       int_val      = static_cast<long int>( std::round( 1000000 / double_value ) );
                                         // ASSUMPTION hz
-                                        std::cout << " Freq. in Hz=" << std::setprecision( 4 ) << std::right << std::setw( 8 ) << double_value;
-                                        std::cout << " (as microsecond interval=" << std::right << std::setw( 8 ) << int_val << ")" << std::endl;
+                                        out << " Freq. in Hz=" << std::setprecision( 4 ) << std::right << std::setw( 8 ) << double_value;
+                                        out << " (as microsecond interval=" << std::right << std::setw( 8 ) << int_val << ")" << std::endl;
                                         if ( freq.key == "default" )
                                         {
                                             new_domain.default_interval = int_val;
@@ -415,7 +416,7 @@ parseJSONData( meric_json_data_t& data )
                                             continue;
                                         }
                                     }
-                                    std::cout.copyfmt( init_state );
+                                    out.copyfmt( init_state );
                                 }
                                 else
                                 {
@@ -447,6 +448,7 @@ usage()
               << "\n"
               << "Options:\n"
               << "  --verbose, -v   Verbose output.\n"
+              << "  --env-vars, -e  Generate exemplarily Score-P variables based on found counters.\n"
               << "  --help, -h      Show help output. Does not execute any other command.\n"
               << "\n"
               << "\n"
@@ -457,6 +459,7 @@ int
 main( int argc, char* argv[] )
 {
     bool verbose = false;
+    bool envvars = false;
     for ( int i = 1; i < argc; ++i )
     {
         std::string arg = argv[ i ];
@@ -468,6 +471,10 @@ main( int argc, char* argv[] )
         {
             usage();
             exit( 0 );
+        }
+        else if ( arg == "-e" || arg == "--env-vars" )
+        {
+            envvars = true;
         }
         else
         {
@@ -504,7 +511,16 @@ main( int argc, char* argv[] )
 
     // Query JSON data via Meric's systemInfo tool
     meric_json_data_t json_data;
-    parseJSONData( json_data );
+    NullBuffer*       null_buf;
+    if ( envvars )
+    {
+        // silence the information output
+        parseJSONData( json_data, null_buf );
+    }
+    else
+    {
+        parseJSONData( json_data, std::cout.rdbuf() );
+    }
 
     // cross check between extlib source and json
     logging::info() << "Checking extlib data against JSON data:";
@@ -545,6 +561,63 @@ main( int argc, char* argv[] )
             }
         }
     }
+
+    if ( !envvars )
+    {
+        return 0;
+    }
+
+    std::cout << "# Score-P environment variables based on available counters:" << std::endl
+              << "\n# Notes:" << std::endl
+              << "# - The counter list contains every available counter." << std::endl
+              << "#   Out of overhead considerations only a selection should be used at a time" << std::endl
+              << "# - This tool should be run on the target hardware as counters might differ.\n" << std::endl;
+
+    std::string sep                = ",";
+    std::string domain_counter_sep = ":";
+
+    std::string counters_string = "";
+    std::string domains_string  = "";
+    long int    max_min         = 0;
+    long int    max_default     = 0;
+    for ( const auto& domain : json_data.domains )
+    {
+        domains_string += domain.name + sep;
+        for ( const auto& counter : domain.counters )
+        {
+            counters_string += domain.name + domain_counter_sep +  counter + sep;
+        }
+        max_min     = std::max( max_min, domain.min_interval );
+        max_default = std::max( max_default, domain.default_interval );
+    }
+
+    // remove unnecessary separators at the end
+    if ( !counters_string.empty() && counters_string.back() == sep.front() )
+    {
+        counters_string.pop_back();
+    }
+    if ( !domains_string.empty() && domains_string.back() == sep.front() )
+    {
+        domains_string.pop_back();
+    }
+
+
+
+    std::cout << "# Only required if the plugin path is not already in the environment" << std::endl
+              << "export LD_LIBRARY_PATH=\"@CMAKE_INSTALL_PREFIX@/lib:$LD_LIBRARY_PATH\"" << std::endl
+              << "# Providing the Meric plugin to the Score-P metric plugin interface" << std::endl
+              << "export SCOREP_METRIC_PLUGINS=meric_plugin" << std::endl
+              << "# Specification of the counters as pairing of domain and counter" << std::endl
+              << "export SCOREP_METRIC_MERIC_PLUGIN=" + counters_string << std::endl
+              << "# List of used domains (default: ALL) - allows enabling/disabling counters by domain" << std::endl
+              << "export SCOREP_METRIC_MERIC_PLUGIN_DOMAINS=" + domains_string << std::endl << std::endl
+              << "# Polling interval is shared between all sources" << std::endl
+              << "# Maximum of all minimum intervals:" << std::endl
+              << "#export SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_US=" + std::to_string( max_min ) << std::endl
+              << "# Maximum of all default intervals:" << std::endl
+              << "export SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_US=" + std::to_string( max_default ) << std::endl
+              << "# Optional setting the verbose level of the plugin. default WARN, other DEBUG,ERROR, INFO" << std::endl
+              << "export SCOREP_METRIC_MERIC_PLUGIN_VERBOSE=WARN" << std::endl;
 
     return 0;
 }
