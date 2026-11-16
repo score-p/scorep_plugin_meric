@@ -31,7 +31,7 @@ comma_separated_domain_list()
 
 
 std::vector<unsigned int>
-meric_plugin::requested_domain_ids( std::string env_str )
+meric_plugin::requested_domain_ids( std::string env_str, char separator )
 {
     // Parse the DOMAINS environment variable for the domains the user requests
     std::vector<unsigned int> requested_ids;
@@ -48,8 +48,8 @@ meric_plugin::requested_domain_ids( std::string env_str )
         }
         return requested_ids;
     }
-    // expecting a comma-separated list of energy domains
-    for ( std::string name : split_string( env_str, ',' ) )
+    // expecting a separated list of energy domains (using specified or default value for separator)
+    for ( std::string name : split_string( env_str, separator ) )
     {
         const auto it = ExtlibWrapper::domain_id_by_name.find( name );
         if ( it != ExtlibWrapper::domain_id_by_name.end() )
@@ -70,8 +70,22 @@ meric_plugin::meric_plugin() :
 {
     logging::info() << "Measurement interval: " << measurement.interval().count() << " microseconds";
 
+    // Getting single character separators
+    std::string env_separator         = scorep::environment_variable::get( "SEPARATOR", "," );
+    std::string env_counter_separator = scorep::environment_variable::get( "COUNTER_SEPARATOR", ":" );
+    if ( env_separator.length() != 1 || env_counter_separator.length() != 1 )
+    {
+        logging::fatal() << "Specified separators have to be single characters!";
+    }
+    separator         = env_separator.front();
+    counter_separator = env_counter_separator.front();
+    if ( separator == counter_separator )
+    {
+        logging::fatal() << "Specified separators have to be different from each other!";
+    }
+
     std::string               env_requested_domains = scorep::environment_variable::get( "DOMAINS", "ALL" );
-    std::vector<unsigned int> requested_domains     = requested_domain_ids( env_requested_domains );
+    std::vector<unsigned int> requested_domains     = requested_domain_ids( env_requested_domains, separator );
     this->extlib         = ExtlibWrapper( requested_domains );
     this->domain_by_name = this->extlib.query_enabled_domains();
 
@@ -96,14 +110,15 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
 {
     logging::debug() << "Requested metric " << metric_name;
 
-    std::vector<std::string> domain_and_counter = split_string( metric_name, ':' );
+    std::vector<std::string> domain_and_counter = split_string( metric_name, counter_separator );
     if ( domain_and_counter.size() != 2 )
     {
-        logging::warn() << "Metric '" << metric_name << "' has the wrong format. Expected 'DOMAIN:COUNTER'";
+        logging::warn() << "Metric '" << metric_name << "' has the wrong format. Expected 'DOMAIN" << counter_separator << "COUNTER'";
         return {};
     }
-    const std::string& domain_name  = domain_and_counter[ 0 ];
-    const std::string& counter_name = domain_and_counter[ 1 ];
+    const std::string& domain_name                  = domain_and_counter[ 0 ];
+    const std::string& counter_name                 = domain_and_counter[ 1 ];
+    const std::string  metric_name_with_default_sep = domain_name + ":" + counter_name;
 
     std::vector<scorep::plugin::metric_property> metric_properties;
 
@@ -143,7 +158,7 @@ meric_plugin::get_metric_properties( const std::string& metric_name )
         return metric_properties;
     }
 
-    add_property( make_handle( metric_name, Metric::Single(), domain.idx, domain.id, domain_name, counter_it->second, counter_name ) );
+    add_property( make_handle( metric_name_with_default_sep, Metric::Single(), domain.idx, domain.id, domain_name, counter_it->second, counter_name ) );
     return metric_properties;
 }
 

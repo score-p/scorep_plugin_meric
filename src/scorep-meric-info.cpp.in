@@ -617,7 +617,10 @@ main( int argc, char* argv[] )
               << "# Maximum of all default intervals:" << std::endl
               << "export SCOREP_METRIC_MERIC_PLUGIN_INTERVAL_US=" + std::to_string( max_default ) << std::endl
               << "# Optional setting the verbose level of the plugin. default WARN, other DEBUG,ERROR, INFO" << std::endl
-              << "export SCOREP_METRIC_MERIC_PLUGIN_VERBOSE=WARN" << std::endl;
+              << "export SCOREP_METRIC_MERIC_PLUGIN_VERBOSE=WARN" << std::endl
+              << "# Default values for separators between domains/counters and in domain counter pairings" << std::endl
+              << "export SCOREP_METRIC_MERIC_PLUGIN_SEPARATOR=," << std::endl
+              << "export SCOREP_METRIC_MERIC_PLUGIN_COUNTER_SEPARATOR=:" << std::endl;
 
     return 0;
 }

@@ -56,8 +56,13 @@ private:
 
     std::unordered_map<std::string, ExtlibWrapper::Domain> domain_by_name;
 
+    // Separator for string items and a separator for the domain:counter pairings
+    char separator;
+    char counter_separator;
+
 private:
     static std::vector<unsigned int>
-    requested_domain_ids( std::string env_str );
+    requested_domain_ids( std::string env_str,
+                          char        separator );
 };
 }
